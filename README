@@ -6,6 +6,8 @@ functions. If spellchecking is enabled will also display possible corrections.
 The current buffer is checked for user defined procedures / functions when it
 is written to disk.
 
+More information and screenshots (in the wiki) at: https://github.com/LStinson/TagmaTips
+
 Installation:
     Place the files in ~/.vim or ~/vimfiles
     If using a manager (like Pathogen) place in

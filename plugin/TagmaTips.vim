@@ -3,6 +3,7 @@
 " Last Changed: 2011-09-10
 " Maintainer:   Lorance Stinson @ Gmail ...
 " Version:      0.1
+" Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
 "
 " Install:      Place the files in ~/.vim or ~/vimfiles
