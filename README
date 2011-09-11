@@ -1,0 +1,12 @@
+This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
+Tips for code. Currently only Tcl and AWK are supported.
+
+Tool Tips are displayed for commands, variables and user defined procedures /
+functions. If spellchecking is enabled will also display possible corrections.
+The current buffer is checked for user defined procedures / functions when it
+is written to disk.
+
+Installation:
+    Place the files in ~/.vim or ~/vimfiles
+    If using a manager (like Pathogen) place in
+    ~/.vim/bundle or ~/vimfiles/bundle

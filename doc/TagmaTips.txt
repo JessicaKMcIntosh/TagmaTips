@@ -1,0 +1,60 @@
+TagmaTips.txt	Plugin to display Tool Tips for code.
+		Vim version 7.x.
+		Last Change: 2011-09-10
+	
+
+		       By Lorance Stinson AT Gmail ...
+
+						    *TagmaTips* *TagmaTips-plugin*
+	Contents:
+
+	      Description................|TagmaTips-description|
+	      Settings......................|TagmaTips-settings|
+	      TODO..............................|TagmaTips-Todo|
+	      Adding File Types.........|TagmaTips-adding-types|
+
+
+This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
+Tips for code. Currently only Tcl and AWK are supported.
+
+==============================================================================
+DESCRIPTION					       *TagmaTips-description*
+
+Tool Tips are displayed for commands, variables and user defined procedures /
+functions. If spellchecking is enabled will also display possible corrections.
+The current buffer is checked for user defined procedures / functions when it
+is written to disk.
+
+==============================================================================
+SETTINGS						  *TagmaTips-settings*
+
+g:TagmaTipsTypes
+	Set the File Types that will be enabled. This must be a list.
+	If not specified all supported file types are enabled.
+
+	Example:
+		let g:TagmaTipsTypes = ['awk']
+
+==============================================================================
+TODO							      *TagmaTips-Todo*
+
+* Support more file types.
+
+* Better documentation.
+
+* Improve existing file types.
+
+==============================================================================
+ADDING FILE TYPES 				      *TagmaTips-adding-types*
+
+To add new file types the plugin file 'plugin/TagmaTips.vim' needs to be
+modified. The file type needs to be added to the Dictionary
+'s:TagmaTipsSupported' at the end of the file. The file type and setup
+function also needs to be defined in the function 'TagmaTipsSet()'.
+
+The code for each file type is stored in the 'autoload/' directory. This keeps
+it from loading until it is needed.
+
+The easiest method would be to copy an existing file type and modify it.
+
+ vim:ts=8 sw=8 noexpandtab tw=78 ft=help:
