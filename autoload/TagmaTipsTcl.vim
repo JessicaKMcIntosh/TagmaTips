@@ -43,7 +43,7 @@ function! TagmaTipsTcl#ProcScan()
     " Scan for procedure definitions.
     while l:lnum <= l:eof
         let l:line = getline(l:lnum)
-        if match(l:line, '^\s*$') >= 0
+        if match(l:line, '^\}\?\s*$') >= 0
             let l:blank = l:lnum
             let l:lnum = l:lnum + 1
             continue
