@@ -1,90 +1,29 @@
-" Awk Tagma Tool Tips/Balloon Plugin
+" Tagma Tool Tips settings for Awk.
 " vim:foldmethod=marker
-" File:         TagmaTipsAwk.vim
-" Last Changed: 2011-09-10
+" File:         autoload/TagmaTipsawk.vim
+" Last Changed: Sat, Dec 31, 2011
 " Maintainer:   Lorance Stinson @ Gmail ...
-" Version:      0.1
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
 "
 " Description:
-" Awk tooltips for the Tagma Tool Tips Plugin
-" When the buffer is written will also scan for all function definitions.
-" A tooltip will thus be displayed for all functions in the file.
+" Awk specific settings for the Tagma Tool Tips Plugin
 
-" Only process the plugin once. {{{1
-if exists("g:loadedTagmaTipsAwk") || &cp || !has('balloon_eval')
-    finish
-endif
-let g:loadedTagmaTipsAwk = 1
+" TagmaTipsawk#LoadSettings -- Load the Awk settings. {{{1
+"   Loads the Awk specific settings into g:TagmaTipsSettings.
+"
+" Arguments:
+"   None
+"
+" Result:
+"   None
+"
+" Side effect:
+"   Updates g:TagmaTipsSettings.
+function! TagmaTipsawk#LoadSettings()
 
-" Function to return the tooltip text. {{{1
-function! TagmaTipsAwk#Expr()
-    let l:word = v:beval_text
-    let l:descr = []
-    if has_key(s:AwkCommands, l:word)
-        let l:descr = s:AwkCommands[l:word]
-    elseif has_key(b:AwkToolTipsFuncs, l:word)
-        let l:descr = b:AwkToolTipsFuncs[l:word]
-    elseif has_key(s:AwkVariables, l:word)
-        let l:descr = s:AwkVariables[l:word]
-    else
-        let l:descr = spellsuggest(spellbadword(v:beval_text)[0], 5, 0 )
-    endif
-    return join(l:descr, has("balloon_multiline") ? "\n" : " ")
-endfunction
-
-" Scan the current buffer for prodecures. {{{1
-function! TagmaTipsAwk#FuncScan()
-    let b:AwkToolTipsFuncs = {}
-    let l:eof = line('$')
-    let l:lnum = 1
-    let l:blank = 0
-    " Scan for function definitions.
-    while l:lnum <= l:eof
-        let l:line = getline(l:lnum)
-        if match(l:line, '^\s*$') >= 0
-            let l:blank = l:lnum
-            let l:lnum = l:lnum + 1
-            continue
-        endif
-        let l:matches = matchlist(l:line, '^\s*func\w*\s\+\(\([^ 	(]\+\)\(\s\+\|(\).\{-}\)\(\s\+{\s*\)\?$')
-        if len(l:matches) != 0
-            " Save the function.
-            let l:fname = l:matches[2]
-            let b:AwkToolTipsFuncs[l:fname] = []
-            call extend(b:AwkToolTipsFuncs[l:fname],[l:matches[1], ''])
-            " Try to find the description.
-            let l:def_lnum = l:blank + 1
-            while l:def_lnum < l:lnum && l:def_lnum > l:lnum - 30
-                call add(b:AwkToolTipsFuncs[l:fname], getline(l:def_lnum))
-                let l:def_lnum = l:def_lnum + 1
-            endwhile
-        endif
-        let l:lnum = l:lnum + 1
-    endwhile
-endfunction
-
-" Setup the balloon options for the current buffer. {{{1
-function! TagmaTipsAwk#Setup()
-    " Set the balloonexpr for the buffer if not already set.
-    if !exists("b:loadedTagmaTipsBuffer")
-        let b:loadedTagmaTipsBuffer = 1
-
-        " Balloon settings.
-        setlocal bexpr=TagmaTipsAwk#Expr()
-        setlocal ballooneval
-
-        " Callback to update the function list.
-        au BufWritePost <buffer> call TagmaTipsAwk#FuncScan()
-
-        " Initialize the local function list.
-        call TagmaTipsAwk#FuncScan()
-    endif
-endfunction
-
-" Dictionary of Awk commands. {{{1
-let s:AwkCommands = {
+    " Awk Primitives. {{{2
+    let g:TagmaTipsSettings['awk']['prim'] = {
     \ 'close':       ['close(file [, how])',
     \                 '',
     \                 'Close file, pipe or co-process.  The optional how should only be used when',
@@ -356,10 +295,10 @@ let s:AwkCommands = {
     \                 'equal to one of the known locale categories described in GAWK:  Effective AWK',
     \                 'Programming.   You  must  also  supply  a text domain.  Use TEXTDOMAIN if you',
     \                 'want to use the current domain.'],
-    \ }
+    \ } " }}}2
 
-" Dictionary of Awk variables. {{{1
-let s:AwkVariables = {
+    " Awk Variables. {{{2
+    let g:TagmaTipsSettings['awk']['vars'] = {
     \ 'ARGC':        ['ARGC',
     \                 '',
     \                 'The  number  of  command  line  arguments (does not include options to gawk,',
@@ -494,4 +433,6 @@ let s:AwkVariables = {
     \                 '',
     \                 'The text domain of the AWK program; used to find the localized translations',
     \                 "for the program's strings."],
-    \ }
+    \ } "}}}2
+
+endfunction

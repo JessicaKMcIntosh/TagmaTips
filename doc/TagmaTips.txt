@@ -1,6 +1,6 @@
 TagmaTips.txt	Plugin to display Tool Tips for code.
 		Vim version 7.x.
-		Last Change: 2011-09-10
+		Last Change: Sat, Dec 31, 2011
 		Home: https://github.com/LStinson/TagmaTips
 	
 
@@ -11,6 +11,7 @@ TagmaTips.txt	Plugin to display Tool Tips for code.
 
 	      Description................|TagmaTips-description|
 	      Settings......................|TagmaTips-settings|
+	      Supported Types..................|TagmaTips-Types|
 	      TODO..............................|TagmaTips-Todo|
 	      Adding File Types.........|TagmaTips-adding-types|
 
@@ -27,6 +28,19 @@ The current buffer is checked for user defined procedures / functions when it
 is written to disk.
 
 See the home URL above for more information and screenshots (in the wiki)
+
+==============================================================================
+SUPPORTED TYPES						     *TagmaTips-Types*
+
+AwK	Locates user defined functions.
+	Supports Awk variables and most primitives.
+
+Tcl	Locates user defined functions.
+	Supports Tcl variables and primitives.
+
+Vim	Locates user defined functions.
+	Loads builtin functions and internal variables from the eval.txt help
+	file.
 
 ==============================================================================
 SETTINGS						  *TagmaTips-settings*
@@ -50,13 +64,13 @@ TODO							      *TagmaTips-Todo*
 ==============================================================================
 ADDING FILE TYPES 				      *TagmaTips-adding-types*
 
-To add new file types the plugin file 'plugin/TagmaTips.vim' needs to be
-modified. The file type needs to be added to the Dictionary
-'s:TagmaTipsSupported' at the end of the file. The file type and setup
-function also needs to be defined in the function 'TagmaTipsSet()'.
+To add new file types the file "plugin/TagmaTips.vim" needs to be modified.
+The file type needs to be added to the Dictionary "g:TagmaTips#Settings. See
+the comments for details of what to add.
 
-The code for each file type is stored in the 'autoload/' directory. This keeps
-it from loading until it is needed.
+Additionally for primitives and variables to be loaded properly an autoload
+plugin needs to be created for that file type. The name of the file is
+"autoload/TagmaTips#.vim" where '#' is the file type identifier, eg. "awk".
 
 The easiest method would be to copy an existing file type and modify it.
 

@@ -1,90 +1,29 @@
-" Tcl Tagma Tool Tips/Balloon Plugin
+" Tagma Tool Tips settings for Tcl.
 " vim:foldmethod=marker
-" File:         TagmaTipsTcl.vim
-" Last Changed: 2011-09-10
+" File:         autoload/TagmaTipstcl.vim
+" Last Changed: Sat, Dec 31, 2011
 " Maintainer:   Lorance Stinson @ Gmail ...
-" Version:      0.1
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
 "
 " Description:
-" Tcl tooltips for the Tagma Tool Tips Plugin
-" When the buffer is written will also scan for all proc definitions.
-" A tooltip will thus be displayed for all procedures in the file.
+" Tcl specific settings for the Tagma Tool Tips Plugin
 
-" Only process the plugin once. {{{1
-if exists("g:loadedTagmaTipsTcl") || &cp || !has('balloon_eval')
-    finish
-endif
-let g:loadedTagmaTipsTcl = 1
+" TagmaTipstcl#LoadSettings -- Load the Tcl Settings. {{{1
+"   Loads the Tcl specific settings into g:TagmaTipsSettings.
+"
+" Arguments:
+"   None
+"
+" Result:
+"   None
+"
+" Side effect:
+"   Updates g:TagmaTipsSettings.
+function! TagmaTipstcl#LoadSettings()
 
-" Function to return the tooltip text. {{{1
-function! TagmaTipsTcl#Expr()
-    let l:word = v:beval_text
-    let l:descr = []
-    if has_key(s:TclCommands, l:word)
-        let l:descr = s:TclCommands[l:word]
-    elseif has_key(b:TclToolTipsProcs, l:word)
-        let l:descr = b:TclToolTipsProcs[l:word]
-    elseif has_key(s:TclVariables, l:word)
-        let l:descr = s:TclVariables[l:word]
-    else
-        let l:descr = spellsuggest(spellbadword(v:beval_text)[0], 5, 0 )
-    endif
-    return join(l:descr, has("balloon_multiline") ? "\n" : " ")
-endfunction
-
-" Scan the current buffer for prodecures. {{{1
-function! TagmaTipsTcl#ProcScan()
-    let b:TclToolTipsProcs = {}
-    let l:eof = line('$')
-    let l:lnum = 1
-    let l:blank = 0
-    " Scan for procedure definitions.
-    while l:lnum <= l:eof
-        let l:line = getline(l:lnum)
-        if match(l:line, '^\}\?\s*$') >= 0
-            let l:blank = l:lnum
-            let l:lnum = l:lnum + 1
-            continue
-        endif
-        let l:matches = matchlist(l:line, '^\s*proc\s\+\(\(::\w\+::\)*\(\S\+\)\s\+.\{-}\)\(\s\+{\s*\)\?$')
-        if len(l:matches) != 0
-            " Save the procedure.
-            let l:proc = l:matches[3]
-            let b:TclToolTipsProcs[l:proc] = []
-            call extend(b:TclToolTipsProcs[l:proc],[l:matches[1], ''])
-            " Try to find the description.
-            let l:def_lnum = l:blank + 1
-            while l:def_lnum < l:lnum && l:def_lnum > l:lnum - 30
-                call add(b:TclToolTipsProcs[l:proc], getline(l:def_lnum))
-                let l:def_lnum = l:def_lnum + 1
-            endwhile
-        endif
-        let l:lnum = l:lnum + 1
-    endwhile
-endfunction
-
-" Setup the balloon options for the current buffer. {{{1
-function! TagmaTipsTcl#Setup()
-    " Set the balloonexpr for the buffer if not already set.
-    if !exists("b:loadedTagmaTipsBuffer")
-        let b:loadedTagmaTipsBuffer = 1
-
-        " Balloon settings.
-        setlocal bexpr=TagmaTipsTcl#Expr()
-        setlocal ballooneval
-
-        " Callback to update the procedure list.
-        au BufWritePost <buffer> call TagmaTipsTcl#ProcScan()
-
-        " Initialize the local procedure list.
-        call TagmaTipsTcl#ProcScan()
-    endif
-endfunction
-
-" Dictionary of Tcl commands. {{{1
-let s:TclCommands = {
+    " Tcl Primitives. {{{2
+    let g:TagmaTipsSettings['tcl']['prim'] = {
     \ 'after':       ['after - Execute a command after a time delay',
     \                 '',
     \                 'after ms',
@@ -714,10 +653,10 @@ let s:TclCommands = {
     \ 'while':       ['while - Execute script repeatedly as long as a condition is met',
     \                 '',
     \                 'while test body'],
-    \ }
+    \ } " }}}2
 
-" Dictionary of Tcl variables. {{{1
-let s:TclVariables = {
+    " Tcl Variables. {{{2
+    let g:TagmaTipsSettings['tcl']['vars'] = {
     \ 'TCLLIBPATH':  ["env(TCLLIBPATH)",
     \                 '',
     \                 "If set, then it must contain a valid Tcl list giving directories to  search",
@@ -907,4 +846,6 @@ let s:TclVariables = {
     \                 "On Windows, it defaults  to  \S, meaning  anything  but  a Unicode space",
     \                 "character.  Otherwise it defaults to \w, which is any  Unicode  word",
     \                 "character  (number, letter, or underscore)."],
-    \ }
+    \ } " }}}2
+
+endfunction
