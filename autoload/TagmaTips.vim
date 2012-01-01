@@ -1,7 +1,7 @@
 " Tagma Tool Tips/Balloon Plugin
 " vim:foldmethod=marker
 " File:         autoload/TagmaTips.vim
-" Last Changed: Sat, Dec 31, 2011
+" Last Changed: Sun, Jan 1, 2012
 " Maintainer:   Lorance Stinson @ Gmail ...
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
@@ -9,6 +9,13 @@
 " Description:
 " Autoloaded code for TagmaTips.
 " Contains generic code and settings.
+
+" Plugin version.
+let g:TagmaTips#version = 20120101
+
+" The path to this script.
+" Useful for caching or loading specific files..
+let g:TagmaTipsAutoloadPath = expand('<sfile>:p:h')
 
 " TagmaTips#ProcScan -- Scan the current buffer for procedures. {{{1
 "
@@ -48,7 +55,7 @@ function! TagmaTips#ProcScan()
         endif
         let l:lnum = l:lnum + 1
     endwhile
-endfunction
+endfunction " }}}1
 
 " TagmaTips#SetupBuffer -- Setup the tool tips for the current buffer. {{{1
 "
@@ -90,7 +97,7 @@ function! TagmaTips#SetupBuffer()
 
     " Initialize the local procedure list.
     call TagmaTips#ProcScan()
-endfunction
+endfunction " }}}1
 
 " TagmaTips#TipsExpr -- Callback to return the tooltip text. {{{1
 "
@@ -133,4 +140,4 @@ function! TagmaTips#TipsExpr()
     endif
     
     return join(l:tool_tip, has("balloon_multiline") ? "\n" : " ")
-endfunction
+endfunction " }}}1
