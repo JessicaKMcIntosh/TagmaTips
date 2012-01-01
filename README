@@ -1,14 +1,105 @@
+*TagmaTips.txt*	For Vim version 7.x.	Last Change: Sat, Dec 31, 2011
+
+			 Plugin to display Tool Tips.
+		    https://github.com/LStinson/TagmaTips
+	     http://www.vim.org/scripts/script.php?script_id=3738
+		       By Lorance Stinson AT Gmail ...
+
+Tool Tips					*TagmaTips*
+
+Contents:
+	Description				|TagmaTips-description|
+	Installation				|TagmaTips-installation|
+	Settings				|TagmaTips-settings|
+	Supported Types				|TagmaTips-Types|
+	TODO					|TagmaTips-Todo|
+	Adding File Types			|TagmaTips-adding-types|
+
+
 This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
-Tips for code. Currently only Tcl and AWK are supported.
+Tips for code. Currently only Awl, Tcl and Vim are supported.
+
+==============================================================================
+DESCRIPTION					*TagmaTips-description*
 
 Tool Tips are displayed for commands, variables and user defined procedures /
 functions. If spellchecking is enabled will also display possible corrections.
 The current buffer is checked for user defined procedures / functions when it
 is written to disk.
 
-More information and screenshots (in the wiki) at: https://github.com/LStinson/TagmaTips
+See the GitHub URL above for more information and screenshots (in the wiki)
 
-Installation:
-    Place the files in ~/.vim or ~/vimfiles
-    If using a manager (like Pathogen) place in
-    ~/.vim/bundle or ~/vimfiles/bundle
+==============================================================================
+INSTALLATION					*TagmaTips-installation*
+
+Copy the files to your ~/.vim or ~/vimfiles directory.
+If using a package manager like pathogen place the whole directory in the
+bundle directory.
+
+==============================================================================
+SUPPORTED TYPES					*TagmaTips-Types*
+
+AwK	Locates user defined functions.
+	Supports Awk variables and most primitives.
+
+Tcl	Locates user defined functions.
+	Supports most Tcl variables and primitives.
+
+Vim	Locates user defined functions.
+	Loads builtin functions, internal variables and features from the
+	eval.txt help file.
+	If enabled the data loaded from eval.txt will be cached.
+
+==============================================================================
+SETTINGS					*TagmaTips-settings*
+
+*g:TagmaTipsEnableCache*
+	Enables caching of Tool Tips data if the file type supports it.
+	Enabled by default. >
+	let g:TagmaTipsEnableCache = 1
+<
+
+*g:TagmaTipsTypes*
+	Set the File Types that will be enabled. This must be a list.
+	If not specified all supported file types are enabled. >
+		let g:TagmaTipsTypes = ['awk']
+<
+
+*g:TagmaTipsVimDisable*
+	Disables the extended Vim support.
+	Reading the data from the 'eval.txt' help file can take a while.
+	This will stop the related slow-down.
+	If caching is enabled this slow-down will only be experienced once.
+	By default extended Vim support is enabled. >
+		let g:TagmaTipsVimDisable = 1
+<
+
+==============================================================================
+TODO						*TagmaTips-Todo*
+
+* Support more file types.
+
+* Better documentation.
+
+==============================================================================
+ADDING FILE TYPES 				*TagmaTips-adding-types*
+
+To add new file types the file "plugin/TagmaTips.vim" needs to be modified.
+The file type needs to be added to the Dictionary "g:TagmaTips#Settings. See
+the comments for details of what to add.
+
+Additionally for primitives and variables to be loaded properly an autoload In
+order for primitives and variables to exist for tool tips they must be defined
+in an file type specific autoload plugin. The name of the file is
+"autoload/TagmaTips#.vim" where '#' is the file type identifier, eg. "awk".
+When a file type is setup the function "LoadSettings" is called from the file
+type specific autoload file.
+
+File types can have a custom function to lookup tool tips. If the settings key
+"expr" exists for a file type that function is called if the tool tip can not
+be found in the normal lists. For an example see "autoload/TagmaTipsvim.vim".
+
+It is suggested to copy the settings and autoload files for an exist file type
+and modify them to match your language.
+
+ vim:ts=8 sw=8 noexpandtab tw=78 ft=help:
