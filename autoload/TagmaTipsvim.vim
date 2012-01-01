@@ -1,13 +1,15 @@
 " Tagma Tool Tips settings for Vim.
 " vim:foldmethod=marker
 " File:         autoload/TagmaTipsvim.vim
-" Last Changed: Sat, Dec 31, 2011
+" Last Changed: Sun, Jan 1, 2012
 " Maintainer:   Lorance Stinson @ Gmail ...
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
 "
 " Description:
 " Vim specific settings for the Tagma Tool Tips Plugin
+
+" Autoload Functions:
 
 " TagmaTipsvim#LoadSettings -- Load the Vim Settings. {{{1
 "   Loads the Vim specific settings into g:TagmaTipsSettings.
@@ -19,16 +21,19 @@
 " Result:
 "   None
 "
-" Side effect:
+" Side Effects:
 "   Updates g:TagmaTipsSettings.
 "   Sets 'expr' to 'TagmaTipsvim#TipsExpr()' for finding tool tips.
 "   Sets 'ivars' to a list of internal variables from 'eval.txt'.
 "   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
 "   Sets 'feature' to a list of features from 'eval.txt'.
+"
+"   Caches the data to a file for faster reload later.
+"   If the cache file is present loads the data from the file.
 function! TagmaTipsvim#LoadSettings()
-    " Check to see if this has been disabled.
-    if exists('g:TagmaTipsVimDisable') && g:TagmaTipsVimDisable 
-        return
+    " Check to see if this feature has been disabled.
+    if g:TagmaTipsVimDisable 
+        return 0
     endif
 
     " See if the 'eval.txt' help file is readable.
@@ -37,21 +42,129 @@ function! TagmaTipsvim#LoadSettings()
         return 0
     endif
 
-    " Vim tool tips function.
-    let g:TagmaTipsSettings['vim']['expr'] = 'TagmaTipsvim#TipsExpr()'
-
     " Internal variables, builtin functions and features.
     let g:TagmaTipsSettings['vim']['ivars'] = {}
     let g:TagmaTipsSettings['vim']['builtin'] = {}
     let g:TagmaTipsSettings['vim']['feature'] = {}
 
+    " Vim tool tips function.
+    let g:TagmaTipsSettings['vim']['expr'] = 'TagmaTipsvim#TipsExpr()'
+
+    " Attempt to load the tool tip data from the cache file.
+    if g:TagmaTipsEnableCache && s:LoadVimCache()
+        return 1
+    endif
+
+    " Load tool tip data from eval.txt.
+    call s:LoadEval(l:eval_file)
+
+    " Cache the data for faster load next time.
+    if g:TagmaTipsEnableCache
+        call s:SaveVimCache()
+    endif
+endfunction " }}}1
+
+" TagmaTipsvim#TipsExpr() -- Vim tool tip lookup function. {{{1
+"   Called if the normal TipsExpr() can not find a tool tip for the line.
+"
+" Arguments:
+"   None
+"
+" Result:
+"   Tool tip for the word under the cursor.
+"
+" Side Effects:
+"   None
+function! TagmaTipsvim#TipsExpr()
+    " Get the line the cursor is over.
+    let l:tip_line = getbufline(v:beval_bufnr, v:beval_lnum, v:beval_lnum)[0]
+
+    " See if the cursor is over a function.
+    if strpart(l:tip_line, v:beval_col) =~ '\w\+\s*(' &&
+            \ has_key(g:TagmaTipsSettings['vim']['builtin'], v:beval_text)
+        return g:TagmaTipsSettings['vim']['builtin'][v:beval_text]
+    endif
+
+    " Last part of the line from the cursor position.
+    let l:line_end = strpart(l:tip_line, 0, v:beval_col)
+
+    " See if the cursor is over an internal variable definition.
+    if l:line_end =~ 'v:\w\+$' &&
+            \ has_key(g:TagmaTipsSettings['vim']['ivars'], v:beval_text)
+        return g:TagmaTipsSettings['vim']['ivars'][v:beval_text]
+    endif
+
+    " See if the cursor is over a feature.
+    if l:line_end =~ 'has\s*(.\w\+$' &&
+            \ has_key(g:TagmaTipsSettings['vim']['feature'], v:beval_text)
+        return g:TagmaTipsSettings['vim']['feature'][v:beval_text]
+    endif
+
+    " Default to nothing.
+    " This will cause TipsExpr() to check spelling as a last resort.
+    return []
+endfunction " }}}1
+
+" Utility Functions:
+
+" s:LoadVimCache -- Load tool tip data from a cache file. {{{1
+"
+" Arguments:
+"   None
+"
+" Result:
+"   True if the cache was loaded.
+"
+" Side effect:
+"   Tool tip data is stored in g:TagmaTipsSettings.
+function! s:LoadVimCache()
+    " Cache file name.
+    let l:cache_file = g:TagmaTipsAutoloadPath . '/VimCache.txt'
+    if !filereadable(l:cache_file)
+        return 0
+    endif
+
+    " Load the cache data.
+    let l:cache_data = readfile(l:cache_file)
+    if len(l:cache_data) == 0
+        return 0
+    endif
+
+    " Check the version.
+    if l:cache_data[1] != g:TagmaTips#version
+        return 0
+    endif
+
+    " Read the cache data.
+    let g:TagmaTipsSettings['vim']['ivars']     = eval(l:cache_data[2])
+    let g:TagmaTipsSettings['vim']['builtin']   = eval(l:cache_data[3])
+    let g:TagmaTipsSettings['vim']['feature']   = eval(l:cache_data[4])
+
+    " Return success.
+    return 1
+endfunction " }}}1
+
+" s:LoadEval -- Load tool tip data from eval.txt. {{{1
+"   Reads tool tip data from the 'eval.txt' help file.
+"
+" Arguments:
+"   eval_file   The full path to eval.txt.
+"
+" Result:
+"   None
+"
+" Side Effects:
+"   Sets 'ivars' to a list of internal variables from 'eval.txt'.
+"   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
+"   Sets 'feature' to a list of features from 'eval.txt'.
+function! s:LoadEval(eval_file)
     " Read the file looking for internal variable, builtin function
     " definitions and features.
     let l:section = 0           " The current section.
     let l:buried_func = 0       " Buried function definition.
     let l:name = ''             " The name of the tool tip item.
     let l:body = []             " The body of the tool tip item.
-    for l:line in readfile(l:eval_file)
+    for l:line in readfile(a:eval_file)
         if l:line =~ '^Predefined Vim variables:'
             " Start of the variables.
             let l:section = 1
@@ -123,7 +236,34 @@ function! TagmaTipsvim#LoadSettings()
             endif
         endif
     endfor
-endfunction
+endfunction " }}}1
+
+" s:SaveVimCache -- Load tool tip data from a cache file. {{{1
+"
+" Arguments:
+"   None
+"
+" Result:
+"   None
+"
+" Side Effects:
+"   Tool tip data is saved to a text file.
+"   The plugin version is saved to prevent issues with format change.
+function! s:SaveVimCache()
+    " Cache file name.
+    let l:cache_file = g:TagmaTipsAutoloadPath . '/VimCache.txt'
+
+    " Write the data to the cache file.
+    let l:result = writefile([
+                \   '# Cache file for Vim Tool Tips. DO NOT MODIFY!!',
+                \   g:TagmaTips#version,
+                \   string(g:TagmaTipsSettings['vim']['ivars']),
+                \   string(g:TagmaTipsSettings['vim']['builtin']),
+                \   string(g:TagmaTipsSettings['vim']['feature']),
+                \ ],
+                \ l:cache_file
+                \ )
+endfunction " }}}1
 
 " s:StashToolTip -- Stash a tool tip into g:TagmaTipsSettings {{{1
 "   Truncates the tool tip body to 30 rows.
@@ -136,7 +276,7 @@ endfunction
 " Result:
 "   None
 "
-" Side effect:
+" Side Effects:
 "   The tool tip is stored in g:TagmaTipsSettings.
 function! s:StashToolTip(key, name, body)
     if a:name != ''
@@ -147,45 +287,4 @@ function! s:StashToolTip(key, name, body)
         endif
         let g:TagmaTipsSettings['vim'][a:key][a:name] = l:body
     endif
-endfunction
-
-" TagmaTipsvim#TipsExpr() -- Vim tool tip lookup function. {{{1
-"   Called if the normal TipsExpr() can not find a tool tip for the line.
-"
-" Arguments:
-"   None
-"
-" Result:
-"   Tool tip for the word under the cursor.
-"
-" Side effect:
-"   None
-function! TagmaTipsvim#TipsExpr()
-    " Get the line the cursor is over.
-    let l:tip_line = getbufline(v:beval_bufnr, v:beval_lnum, v:beval_lnum)[0]
-
-    " See if the cursor is over a function.
-    if strpart(l:tip_line, v:beval_col) =~ '\w\+\s*(' &&
-            \ has_key(g:TagmaTipsSettings['vim']['builtin'], v:beval_text)
-        return g:TagmaTipsSettings['vim']['builtin'][v:beval_text]
-    endif
-
-    " Last part of the line from the cursor position.
-    let l:line_end = strpart(l:tip_line, 0, v:beval_col)
-
-    " See if the cursor is over an internal variable definition.
-    if l:line_end =~ 'v:\w\+$' &&
-            \ has_key(g:TagmaTipsSettings['vim']['ivars'], v:beval_text)
-        return g:TagmaTipsSettings['vim']['ivars'][v:beval_text]
-    endif
-
-    " See if the cursor is over a feature.
-    if l:line_end =~ 'has\s*(.\w\+$' &&
-            \ has_key(g:TagmaTipsSettings['vim']['feature'], v:beval_text)
-        return g:TagmaTipsSettings['vim']['feature'][v:beval_text]
-    endif
-
-    " Default to nothing.
-    " This will cause TipsExpr() to check spelling as a last resort.
-    return []
-endfunction
+endfunction " }}}1
