@@ -1,7 +1,7 @@
 " Tagma Tool Tips settings for Awk.
 " vim:foldmethod=marker
 " File:         autoload/TagmaTipsawk.vim
-" Last Changed: Sat, Dec 31, 2011
+" Last Changed: Sun, Jan 1, 2012
 " Maintainer:   Lorance Stinson @ Gmail ...
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
@@ -435,4 +435,4 @@ function! TagmaTipsawk#LoadSettings()
     \                 "for the program's strings."],
     \ } "}}}2
 
-endfunction
+endfunction " }}} 1

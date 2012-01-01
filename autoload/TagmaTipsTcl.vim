@@ -1,7 +1,7 @@
 " Tagma Tool Tips settings for Tcl.
 " vim:foldmethod=marker
 " File:         autoload/TagmaTipstcl.vim
-" Last Changed: Sat, Dec 31, 2011
+" Last Changed: Sun, Jan 1, 2012
 " Maintainer:   Lorance Stinson @ Gmail ...
 " Home:         https://github.com/LStinson/TagmaTips
 " License:      Public Domain
@@ -848,4 +848,4 @@ function! TagmaTipstcl#LoadSettings()
     \                 "character  (number, letter, or underscore)."],
     \ } " }}}2
 
-endfunction
+endfunction " }}}1
