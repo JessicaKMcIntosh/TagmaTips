@@ -1,76 +1,87 @@
-TagmaTips.txt	Plugin to display Tool Tips for code.
-		Vim version 7.x.
-		Last Change: Sat, Dec 31, 2011
-		Home: https://github.com/LStinson/TagmaTips
-	
+*TagmaTips.txt*	For Vim version 7.x.	Last Change: Sat, Dec 31, 2011
 
+			 Plugin to display Tool Tips.
+		    https://github.com/LStinson/TagmaTips
+	     http://www.vim.org/scripts/script.php?script_id=3738
 		       By Lorance Stinson AT Gmail ...
 
-						    *TagmaTips* *TagmaTips-plugin*
-	Contents:
+Tool Tips					*TagmaTips*
 
-	      Description................|TagmaTips-description|
-	      Settings......................|TagmaTips-settings|
-	      Supported Types..................|TagmaTips-Types|
-	      TODO..............................|TagmaTips-Todo|
-	      Adding File Types.........|TagmaTips-adding-types|
+Contents:
+      Description				|TagmaTips-description|
+      Settings					|TagmaTips-settings|
+      Supported Types				|TagmaTips-Types|
+      TODO					|TagmaTips-Todo|
+      Adding File Types				|TagmaTips-adding-types|
 
 
 This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
 Tips for code. Currently only Tcl and AWK are supported.
 
 ==============================================================================
-DESCRIPTION					       *TagmaTips-description*
+DESCRIPTION					*TagmaTips-description*
 
 Tool Tips are displayed for commands, variables and user defined procedures /
 functions. If spellchecking is enabled will also display possible corrections.
 The current buffer is checked for user defined procedures / functions when it
 is written to disk.
 
-See the home URL above for more information and screenshots (in the wiki)
+See the GitHub URL above for more information and screenshots (in the wiki)
 
 ==============================================================================
-SUPPORTED TYPES						     *TagmaTips-Types*
+SUPPORTED TYPES					*TagmaTips-Types*
 
 AwK	Locates user defined functions.
 	Supports Awk variables and most primitives.
 
 Tcl	Locates user defined functions.
-	Supports Tcl variables and primitives.
+	Supports most Tcl variables and primitives.
 
 Vim	Locates user defined functions.
-	Loads builtin functions and internal variables from the eval.txt help
-	file.
+	Loads builtin functions, internal variables and features from the
+	eval.txt help file.
 
 ==============================================================================
-SETTINGS						  *TagmaTips-settings*
+SETTINGS					*TagmaTips-settings*
 
-g:TagmaTipsTypes
+*g:TagmaTipsTypes*
 	Set the File Types that will be enabled. This must be a list.
-	If not specified all supported file types are enabled.
-
-	Example:
+	If not specified all supported file types are enabled. >
 		let g:TagmaTipsTypes = ['awk']
+<
+
+*g:TagmaTipsVimDisable*
+	Disables the extended Vim support.
+	Reading the data from the 'eval.txt' help file can take a while.
+	This will stop the related slow-down.
+	By default extended Vim support is enabled. >
+		let g:TagmaTipsVimDisable = 1
+<
 
 ==============================================================================
-TODO							      *TagmaTips-Todo*
+TODO						*TagmaTips-Todo*
 
 * Support more file types.
 
 * Better documentation.
 
-* Improve existing file types.
-
 ==============================================================================
-ADDING FILE TYPES 				      *TagmaTips-adding-types*
+ADDING FILE TYPES 				*TagmaTips-adding-types*
 
 To add new file types the file "plugin/TagmaTips.vim" needs to be modified.
 The file type needs to be added to the Dictionary "g:TagmaTips#Settings. See
 the comments for details of what to add.
 
-Additionally for primitives and variables to be loaded properly an autoload
-plugin needs to be created for that file type. The name of the file is
+Additionally for primitives and variables to be loaded properly an autoload In
+order for primitives and variables to exist for tool tips they must be defined
+in an file type specific autoload plugin. The name of the file is
 "autoload/TagmaTips#.vim" where '#' is the file type identifier, eg. "awk".
+When a file type is setup the function "LoadSettings" is called from the file
+type specific autoload file.
+
+File types can have a custom function to lookup tool tips. If the setting key
+"expr" exists for a file type that function is called if the tool tip can not
+be found in the normal lists. For an example see "autoload/TagmaTipsvim.vim".
 
 The easiest method would be to copy an existing file type and modify it.
 
