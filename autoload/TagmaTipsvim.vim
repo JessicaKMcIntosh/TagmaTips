@@ -9,6 +9,11 @@
 " Description:
 " Vim specific settings for the Tagma Tool Tips Plugin
 
+" Make sure the continuation lines below do not cause problems in
+" compatibility mode.
+let s:cpo_save = &cpo
+set cpo-=C
+
 " Autoload Functions:
 
 " TagmaTipsvim#LoadSettings -- Load the Vim Settings. {{{1
@@ -51,7 +56,7 @@ function! TagmaTipsvim#LoadSettings()
     let g:TagmaTipsSettings['vim']['expr'] = 'TagmaTipsvim#TipsExpr()'
 
     " Attempt to load the tool tip data from the cache file.
-    if g:TagmaTipsEnableCache && s:LoadVimCache()
+    if g:TagmaTipsEnableCache && TagmaTips#CacheLoad('vim')
         return 1
     endif
 
@@ -60,7 +65,7 @@ function! TagmaTipsvim#LoadSettings()
 
     " Cache the data for faster load next time.
     if g:TagmaTipsEnableCache
-        call s:SaveVimCache()
+        call TagmaTips#CacheSave('vim', ['ivars','builtin','feature'])
     endif
 endfunction " }}}1
 
@@ -107,43 +112,6 @@ endfunction " }}}1
 
 " Utility Functions:
 
-" s:LoadVimCache -- Load tool tip data from a cache file. {{{1
-"
-" Arguments:
-"   None
-"
-" Result:
-"   True if the cache was loaded.
-"
-" Side effect:
-"   Tool tip data is stored in g:TagmaTipsSettings.
-function! s:LoadVimCache()
-    " Cache file name.
-    let l:cache_file = g:TagmaTipsAutoloadPath . '/VimCache.txt'
-    if !filereadable(l:cache_file)
-        return 0
-    endif
-
-    " Load the cache data.
-    let l:cache_data = readfile(l:cache_file)
-    if len(l:cache_data) == 0
-        return 0
-    endif
-
-    " Check the version.
-    if l:cache_data[1] != g:TagmaTips#version
-        return 0
-    endif
-
-    " Read the cache data.
-    let g:TagmaTipsSettings['vim']['ivars']     = eval(l:cache_data[2])
-    let g:TagmaTipsSettings['vim']['builtin']   = eval(l:cache_data[3])
-    let g:TagmaTipsSettings['vim']['feature']   = eval(l:cache_data[4])
-
-    " Return success.
-    return 1
-endfunction " }}}1
-
 " s:LoadEval -- Load tool tip data from eval.txt. {{{1
 "   Reads tool tip data from the 'eval.txt' help file.
 "
@@ -177,7 +145,7 @@ function! s:LoadEval(eval_file)
         elseif l:section == 1
             " Process internal variables.
             if l:name != '' && l:line == ''
-                call s:StashToolTip('ivars', l:name, l:body)
+                call TagmaTips#StoreTip('vim', 'ivars', l:name, l:body)
                 let l:name = ''
             elseif l:line =~ '^v:\w\+\s'
                 let l:matches = matchlist(l:line, '^v:\(\w\+\)\s\+\(.*\)$')
@@ -192,12 +160,12 @@ function! s:LoadEval(eval_file)
         elseif l:section == 2
             " Process builtin function definitions.
             if l:line =~ '^\s*\*feature-list\*\s*$'
-                call s:StashToolTip('builtin', l:name, l:body)
+                call TagmaTips#StoreTip('vim', 'builtin', l:name, l:body)
                 let l:section = 3
             elseif l:line =~ '^\w\+([^)]*)\%(\s\+\*[^*]\+\*\)*\s*$'
                 let l:matches = matchlist(l:line, '\(\(\w\+\)([^)]*)\)')
                 if len(l:matches) != 0
-                    call s:StashToolTip('builtin', l:name, l:body)
+                    call TagmaTips#StoreTip('vim', 'builtin', l:name, l:body)
                     let l:name = l:matches[2]
                     let l:body = [l:matches[1], '']
                 endif
@@ -207,7 +175,7 @@ function! s:LoadEval(eval_file)
                 let l:buried_func = 0
                 let l:matches = matchlist(l:line, '^\(\(\w\+\)([^)]*)\)\s\+\(.*\)$')
                 if len(l:matches) != 0
-                    call s:StashToolTip('builtin', l:name, l:body)
+                    call TagmaTips#StoreTip('vim', 'builtin', l:name, l:body)
                     let l:name = l:matches[2]
                     let l:body = [l:matches[1], '', l:matches[3]]
                 endif
@@ -220,13 +188,13 @@ function! s:LoadEval(eval_file)
         elseif l:section == 3
             " Process features.
             if l:line =~ '^\s*\*string-match\*\s*$'
-                call s:StashToolTip('feature', l:name, l:body)
+                call TagmaTips#StoreTip('vim', 'feature', l:name, l:body)
                 let l:section = 0
                 break
             elseif l:line =~ '^\w\+\t'
                 let l:matches = matchlist(l:line, '^\(\w\+\)\t\+\(.*\)$')
                 if len(l:matches) != 0
-                    call s:StashToolTip('feature', l:name, l:body)
+                    call TagmaTips#StoreTip('vim', 'feature', l:name, l:body)
                     let l:name = l:matches[1]
                     let l:body = [l:matches[1], '', l:matches[2]]
                 endif
@@ -238,53 +206,6 @@ function! s:LoadEval(eval_file)
     endfor
 endfunction " }}}1
 
-" s:SaveVimCache -- Load tool tip data from a cache file. {{{1
-"
-" Arguments:
-"   None
-"
-" Result:
-"   None
-"
-" Side Effects:
-"   Tool tip data is saved to a text file.
-"   The plugin version is saved to prevent issues with format change.
-function! s:SaveVimCache()
-    " Cache file name.
-    let l:cache_file = g:TagmaTipsAutoloadPath . '/VimCache.txt'
-
-    " Write the data to the cache file.
-    let l:result = writefile([
-                \   '# Cache file for Vim Tool Tips. DO NOT MODIFY!!',
-                \   g:TagmaTips#version,
-                \   string(g:TagmaTipsSettings['vim']['ivars']),
-                \   string(g:TagmaTipsSettings['vim']['builtin']),
-                \   string(g:TagmaTipsSettings['vim']['feature']),
-                \ ],
-                \ l:cache_file
-                \ )
-endfunction " }}}1
-
-" s:StashToolTip -- Stash a tool tip into g:TagmaTipsSettings {{{1
-"   Truncates the tool tip body to 30 rows.
-"
-" Arguments:
-"   key         The key to stash into.
-"   name        The name of the tip.
-"   body        The tip body.
-"
-" Result:
-"   None
-"
-" Side Effects:
-"   The tool tip is stored in g:TagmaTipsSettings.
-function! s:StashToolTip(key, name, body)
-    if a:name != ''
-        let l:body = a:body
-        if len(l:body) > 30
-            let l:body = l:body[0:30]
-            call extend(l:body, ['', '...'])
-        endif
-        let g:TagmaTipsSettings['vim'][a:key][a:name] = l:body
-    endif
-endfunction " }}}1
+" Restore the saved compatibility options.
+let &cpo = s:cpo_save
+unlet s:cpo_save

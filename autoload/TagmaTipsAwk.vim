@@ -9,6 +9,11 @@
 " Description:
 " Awk specific settings for the Tagma Tool Tips Plugin
 
+" Make sure the continuation lines below do not cause problems in
+" compatibility mode.
+let s:cpo_save = &cpo
+set cpo-=C
+
 " TagmaTipsawk#LoadSettings -- Load the Awk settings. {{{1
 "   Loads the Awk specific settings into g:TagmaTipsSettings.
 "
@@ -18,7 +23,7 @@
 " Result:
 "   None
 "
-" Side effect:
+" Side Effects:
 "   Updates g:TagmaTipsSettings.
 function! TagmaTipsawk#LoadSettings()
 
@@ -436,3 +441,7 @@ function! TagmaTipsawk#LoadSettings()
     \ } "}}}2
 
 endfunction " }}} 1
+
+" Restore the saved compatibility options.
+let &cpo = s:cpo_save
+unlet s:cpo_save
