@@ -91,7 +91,7 @@ let g:TagmaTipsSettings = {
     \   },
     \   'vim':  {
     \       'blank':    '^\s*$',
-    \       'proc':     '\<fu\%[nction]!\=\s\+\(\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\(\%(\i\|[#.]\|{.\{-1,}}\)*\)\s*(.*).*\)',
+    \       'proc':     '^\s*\<fu\%[nction]!\=\s\+\(\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\(\%(\i\|[#.]\|{.\{-1,}}\)*\)\s*(.*).*\)',
     \   },
     \ } " }}}1
 

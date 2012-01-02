@@ -1,4 +1,4 @@
-"TagmaTips Tagma Tool Tips/Balloon Plugin
+" TagmaTips Tagma Tool Tips/Balloon Plugin
 " vim:foldmethod=marker
 " File:         autoload/TagmaTips.vim
 " Last Changed: Sun, Jan 1, 2012
