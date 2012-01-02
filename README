@@ -41,6 +41,9 @@ SUPPORTED TYPES					*TagmaTips-Types*
 AwK	Locates user defined functions.
 	Supports Awk variables and most primitives.
 
+PerlLocates user defined functions.
+	Supports most Perl primitives.
+
 Tcl	Locates user defined functions.
 	Supports most Tcl variables and primitives.
 
