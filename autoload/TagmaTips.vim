@@ -13,10 +13,6 @@
 " Plugin version.
 let g:TagmaTips#version = 20120102
 
-" The path to this script.
-" Useful for caching or loading specific files..
-let g:TagmaTipsAutoloadPath = expand('<sfile>:p:h')
-
 " TagmaTips#CacheLoad -- Load cache data for a file type. {{{1
 "   Loads cache data for a file type.
 "   The version is verified to prevent compatibility issues.
@@ -31,7 +27,7 @@ let g:TagmaTipsAutoloadPath = expand('<sfile>:p:h')
 "   Updates g:TagmaTipsSettings with the cache data.
 function! TagmaTips#CacheLoad(type)
     " Cache file name.
-    let l:cache_file = g:TagmaTipsAutoloadPath . '/Cache' . a:type . '.txt'
+    let l:cache_file = g:TagmaTipsCachePath .  a:type . '.txt'
     if !filereadable(l:cache_file)
         return 0
     endif
@@ -59,8 +55,8 @@ endfunction " }}}1
 "   The plugin version is saved in the cache file for checking on load.
 "
 " Arguments:
-"   type        The file type to save for.
-"   keys        A list of keys to save.
+"   type        The file type to load for.
+"   keys        A list of keys to cache.
 "
 " Result:
 "   True if the cache data was saved.
@@ -70,7 +66,7 @@ endfunction " }}}1
 "   CAche files are named 'Cache#.txt' where '#' is the file type.
 function! TagmaTips#CacheSave(type, keys)
     " Cache file name.
-    let l:cache_file = g:TagmaTipsAutoloadPath . '/Cache' . a:type . '.txt'
+    let l:cache_file = g:TagmaTipsCachePath  . a:type . '.txt'
 
     " The dictionary that will be written to the cache file.
     let l:cache_data = {}
@@ -84,7 +80,7 @@ function! TagmaTips#CacheSave(type, keys)
 
     " Write the data to the cache file.
     let l:result = writefile([
-                \   '# Cache file for ' . a:type . ' Tool Tips.',
+                \   '# Cache file for ' . &filetype . ' Tool Tips.',
                 \   '# DO NOT MODIFY!!',
                 \   g:TagmaTips#version,
                 \   string(l:cache_data),
@@ -111,26 +107,30 @@ function! TagmaTips#ProcScan()
     let l:eof = line('$')
     let l:lnum = 1
     let l:blank = 0
+
     " Scan for procedure definitions.
     while l:lnum <= l:eof
         let l:line = getline(l:lnum)
+
+        " Keep track of blank lines.
         if match(l:line, b:ToolTipsRegexpBlank) >= 0
             let l:blank = l:lnum
             let l:lnum += 1
             continue
         endif
+
+        " Check for a procedure definition.
         let l:matches = matchlist(l:line, b:ToolTipsRegexpProc)
         if len(l:matches) != 0
             " Save the procedure.
             let l:proc = l:matches[2]
-            let b:TagmaToolTipsProcs[l:proc] = []
-            call extend(b:TagmaToolTipsProcs[l:proc],[l:matches[1], ''])
-            " Try to find the description.
-            let l:def_lnum = l:blank + 1
-            while l:def_lnum < l:lnum && l:def_lnum > l:lnum - g:TagmaTipsLineLimit
-                call add(b:TagmaToolTipsProcs[l:proc], getline(l:def_lnum))
-                let l:def_lnum += 1
-            endwhile
+            let l:body = [l:matches[1], '']
+            call extend(l:body, getline(l:blank + 1, l:lnum - 1))
+            if len(l:body) > g:TagmaTipsLineLimit
+                let l:body = l:body[0:g:TagmaTipsLineLimit - 1]
+                call add(l:body, '...')
+            endif
+            let b:TagmaToolTipsProcs[l:proc] = l:body
         endif
         let l:lnum += 1
     endwhile
@@ -173,7 +173,7 @@ function! TagmaTips#SetupBuffer()
     endif
 
     " Autocommand to update the procedure list.
-    au BufWritePost <buffer> call TagmaTips#ProcScan()
+    autocmd BufWritePost <buffer> call TagmaTips#ProcScan()
 
     " Initialize the local procedure list.
     call TagmaTips#ProcScan()
@@ -195,19 +195,30 @@ endfunction " }}}1
 "   The tool tip body is stored in g:TagmaTipsSettings.
 function! TagmaTips#StoreTip(type, key, name, body)
     " Bail if there are no settings for this file type.
-    if !has_key(g:TagmaTipsSettings, &filetype)
+    if !has_key(g:TagmaTipsSettings, a:type)
         return 0
     endif
 
     " Bail if there is no name.
     if a:name == ''
-        return
+        return 0
+    endif
+
+    " Bail if the key does not exist.
+    if !has_key(g:TagmaTipsSettings[a:type], a:key)
+        return 0
+    endif
+
+    " Make sure the body is a list.
+    if type(a:body) == type([])
+        let l:body = a:body
+    else
+        let l:body = [a:body]
     endif
 
     " Limit the body 
-    let l:body = a:body
     if len(l:body) > g:TagmaTipsLineLimit
-        let l:body = l:body[0:(g:TagmaTipsLineLimit - 1)]
+        let l:body = l:body[0:g:TagmaTipsLineLimit - 1]
         call add(l:body, '...')
     endif
 
