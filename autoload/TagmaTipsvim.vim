@@ -90,17 +90,17 @@ function! TagmaTipsvim#TipsExpr()
         return g:TagmaTipsSettings['vim']['builtin'][v:beval_text]
     endif
 
-    " Last part of the line from the cursor position.
-    let l:line_end = strpart(l:tip_line, 0, v:beval_col)
+    " First part of the line to the cursor position.
+    let l:line_start = strpart(l:tip_line, 0, v:beval_col)
 
     " See if the cursor is over an internal variable definition.
-    if l:line_end =~ 'v:\w\+$' &&
+    if l:line_start =~ 'v:\w\+$' &&
             \ has_key(g:TagmaTipsSettings['vim']['ivars'], v:beval_text)
         return g:TagmaTipsSettings['vim']['ivars'][v:beval_text]
     endif
 
     " See if the cursor is over a feature.
-    if l:line_end =~ 'has\s*(.\w\+$' &&
+    if l:line_start =~ 'has\s*(.\w\+$' &&
             \ has_key(g:TagmaTipsSettings['vim']['feature'], v:beval_text)
         return g:TagmaTipsSettings['vim']['feature'][v:beval_text]
     endif
