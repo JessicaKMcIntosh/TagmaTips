@@ -3,19 +3,23 @@
 use warnings;
 use strict;
 
-# Generate the Tool Tips for Vim from perlpod -f.
+# Generates the tool tips body for Perl functions.
 
+# The maximum number of lines for each function.
+my $line_limit = 35;
+
+# Generate the Tool Tips for Vim from perlpod -f.
 while (my $func = <DATA>) {
     chomp ($func);
     my @tool_tip = `perldoc -t -f '$func'`;
     foreach (@tool_tip) {
          chomp;
          s/'/''/g;
-         s/^ {7}//;
+         s/^ {4}//;
     }
     $#tool_tip-- unless $tool_tip[-1];
-    if (scalar (@tool_tip) > 30) {
-        $#tool_tip = 29;
+    if (scalar (@tool_tip) > $line_limit) {
+        $#tool_tip = $line_limit - 1;
         $#tool_tip-- unless $tool_tip[-2];
         $tool_tip[-1] = '...';
     }
@@ -26,8 +30,11 @@ while (my $func = <DATA>) {
     print "    \\ ],\n";
 }
 
+# Manuall created entries.
+# -X
+
+# Automatically generated entries.
 __DATA__
--X
 abs
 accept
 alarm
