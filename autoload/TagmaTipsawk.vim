@@ -28,7 +28,7 @@ set cpo-=C
 function! TagmaTipsawk#LoadSettings()
 
     " Awk Primitives. {{{2
-    let g:TagmaTipsSettings['awk']['prim'] = {
+    let g:TagmaTipsSettings['awk']['_prim'] = {
     \ 'close':       ['close(file [, how])',
     \                 '',
     \                 'Close file, pipe or co-process.  The optional how should only be used when',
@@ -303,7 +303,7 @@ function! TagmaTipsawk#LoadSettings()
     \ } " }}}2
 
     " Awk Variables. {{{2
-    let g:TagmaTipsSettings['awk']['vars'] = {
+    let g:TagmaTipsSettings['awk']['_vars'] = {
     \ 'ARGC':        ['ARGC',
     \                 '',
     \                 'The  number  of  command  line  arguments (does not include options to gawk,',

@@ -31,7 +31,7 @@ function! TagmaTipsperl#LoadSettings()
     let g:TagmaTipsSettings['perl']['expr'] = 'TagmaTipsperl#TipsExpr()'
 
     " Perl Primitives. {{{2
-    let g:TagmaTipsSettings['perl']['prim'] = {
+    let g:TagmaTipsSettings['perl']['_prim'] = {
     \ '-X': [
     \   '-X FILEHANDLE; -X EXPR; -X DIRHANDLE',
     \   'A file test, where X is one of the letters listed below.',
@@ -5069,7 +5069,7 @@ function! TagmaTipsperl#LoadSettings()
                 \ } " }}}2
 
     " Perl Variables. {{{2
-    let g:TagmaTipsSettings['perl']['vars'] = {
+    let g:TagmaTipsSettings['perl']['_vars'] = {
     \ } " }}}2
 
 endfunction " }}}1
@@ -5096,7 +5096,7 @@ function! TagmaTipsperl#TipsExpr()
     let l:test_word = '-' . v:beval_text
     if l:line_start =~ '-\a$' &&
             \ has_key(g:TagmaTipsSettings['perl']['palias'], l:test_word)
-        return g:TagmaTipsSettings['perl']['prim'][
+        return g:TagmaTipsSettings['perl']['_prim'][
                     \g:TagmaTipsSettings['perl']['palias'][l:test_word]]
     endif
 

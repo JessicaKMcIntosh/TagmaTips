@@ -28,7 +28,7 @@ set cpo-=C
 "
 " Side Effects:
 "   Updates g:TagmaTipsSettings.
-"   Sets 'expr' to 'TagmaTipsvim#TipsExpr()' for finding tool tips.
+"   Sets '_expr' to 'TagmaTipsvim#TipsExpr()' for finding tool tips.
 "   Sets 'ivars' to a list of internal variables from 'eval.txt'.
 "   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
 "   Sets 'feature' to a list of features from 'eval.txt'.
@@ -49,7 +49,7 @@ function! TagmaTipsvim#LoadSettings()
     let g:TagmaTipsSettings['vim']['oalias'] = {}
 
     " Vim tool tips function.
-    let g:TagmaTipsSettings['vim']['expr'] = 'TagmaTipsvim#TipsExpr()'
+    let g:TagmaTipsSettings['vim']['_expr'] = 'TagmaTipsvim#TipsExpr()'
 
     " Attempt to load the tool tip data from the cache file.
     if g:TagmaTipsEnableCache && TagmaTips#CacheLoad('vim')
@@ -90,7 +90,7 @@ function! TagmaTipsvim#TipsExpr()
     let l:tip_line = getbufline(v:beval_bufnr, v:beval_lnum, v:beval_lnum)[0]
 
     " See if the cursor is over a function.
-    if strpart(l:tip_line, v:beval_col) =~ '\w\+\s*(' &&
+    if strpart(l:tip_line, v:beval_col) =~ '^\w*\s*(' &&
             \ has_key(g:TagmaTipsSettings['vim']['builtin'], v:beval_text)
         return g:TagmaTipsSettings['vim']['builtin'][v:beval_text]
     endif

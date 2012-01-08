@@ -68,6 +68,9 @@ function! s:SetDefault(option, default)
     endif
 endfunction
 
+" Enable debugging.
+call s:SetDefault('g:TagmaTipsDebugMode',       0)
+
 " Enable caching, if the file type supports it.
 call s:SetDefault('g:TagmaTipsEnableCache',     1)
 
@@ -88,50 +91,23 @@ delfunction s:SetDefault
 " }}}1
 
 " Settings for each supported file type. {{{1
-"
-" For each file type the following settings are present:
-"   loaded  Boolean to indicate if file type specific settings are loaded.
-"           Only present when the file type settings are loaded.
-"           To disable checking for file type specific settings set this.
-"   blank   Regexp that matches a 'blank' line.
-"   proc    Regexp that matches a procedure definition.
-"   prim    Dictionary of language primitives.
-"   vars    Dictionary of language variables.
-"   expr    If present this function is called if no matches are found for the
-"           word under the cursor.
-"   palias  Dictionary of primitive aliases.
-"   valias  Dictionary of variable aliases.
-"
-" The alias keys 'palias' and 'valias' are used when a primitive or variable
-" can have several names. If an alias matches then that word is looked up in
-" the respective dictionary. For example the Perl documentation for the '-X'
-" operator is would have aliases keys for '-r', '-w' and so on.
-"
-" The 'vars', 'prim', 'palias' and 'valias' dictionaries are populated from an
-" autoload plugin for that file type.
-"
-" The 'proc' regexp must contain two groupings:
-"   #1  The procedure definition for the tooltip.
-"   #2  The name of the procedure for the dictionary of user procedures.
-"
-" They keys 'blank' and 'proc' are required. The others are optional or will
-" be created during setup.
+" See :help TagmaTips-api for details of these settings.
 let g:TagmaTipsSettings = {
     \   'awk':  {
-    \       'blank':    '^\}\?\s*$',
-    \       'proc':     '^\s*func\w*\s\+\(\([^[:space:](]\+\)\(\s\+\|(\).\{-}\)\(\s\+{\s*\)\?$',
+    \       '_blank':    '^\}\?\s*$',
+    \       '_proc':     '^\s*func\w*\s\+\(\([^[:space:](]\+\)\(\s\+\|(\).\{-}\)\(\s\+{\s*\)\?$',
     \   },
     \   'perl':  {
-    \       'blank':    '^\}\?\s*$',
-    \       'proc':     '^\s*sub\s\+\(\(\w\+\)\s[^{]*\)',
+    \       '_blank':    '^\}\?\s*$',
+    \       '_proc':     '^\s*sub\s\+\(\(\w\+\)\s[^{]*\)',
     \   },
     \   'tcl':  {
-    \       'blank':    '^\}\?\s*$',
-    \       'proc':     '^\s*proc\s\+\(\%(::\w\+::\)*\(\S\+\)\s\+.\{-}\)\%(\s\+{\s*\)\?$',
+    \       '_blank':    '^\}\?\s*$',
+    \       '_proc':     '^\s*proc\s\+\(\%(::\w\+::\)*\(\S\+\)\s\+.\{-}\)\%(\s\+{\s*\)\?$',
     \   },
     \   'vim':  {
-    \       'blank':    '^\s*$',
-    \       'proc':     '^\s*\<fu\%[nction]!\=\s\+\(\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\(\%(\i\|[#.]\|{.\{-1,}}\)*\)\s*(.*).*\)',
+    \       '_blank':    '^\s*$',
+    \       '_proc':     '^\s*\<fu\%[nction]!\=\s\+\(\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\(\%(\i\|[#.]\|{.\{-1,}}\)*\)\s*(.*).*\)',
     \   },
     \ } " }}}1
 
@@ -150,10 +126,10 @@ let g:TagmaTipsSettings = {
 "   Create an auto command for each the file type.
 function! s:SetupType(type)
     " Create additional settings for the file type.
-    let g:TagmaTipsSettings[a:type]['prim'] = {}
-    let g:TagmaTipsSettings[a:type]['vars'] = {}
-    let g:TagmaTipsSettings[a:type]['palias'] = {}
-    let g:TagmaTipsSettings[a:type]['valias'] = {}
+    let g:TagmaTipsSettings[a:type]['_prim'] = {}
+    let g:TagmaTipsSettings[a:type]['_vars'] = {}
+    let g:TagmaTipsSettings[a:type]['_palias'] = {}
+    let g:TagmaTipsSettings[a:type]['_valias'] = {}
 
     " Create the autocommand for the file type.
     execute 'autocmd FileType ' . a:type . ' call TagmaTips#SetupBuffer()'

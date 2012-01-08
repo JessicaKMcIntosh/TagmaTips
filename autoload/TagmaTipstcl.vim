@@ -28,7 +28,7 @@ set cpo-=C
 function! TagmaTipstcl#LoadSettings()
 
     " Tcl Primitives. {{{2
-    let g:TagmaTipsSettings['tcl']['prim'] = {
+    let g:TagmaTipsSettings['tcl']['_prim'] = {
     \ 'after':       ['after - Execute a command after a time delay',
     \                 '',
     \                 'after ms',
@@ -661,7 +661,7 @@ function! TagmaTipstcl#LoadSettings()
     \ } " }}}2
 
     " Tcl Variables. {{{2
-    let g:TagmaTipsSettings['tcl']['vars'] = {
+    let g:TagmaTipsSettings['tcl']['_vars'] = {
     \ 'TCLLIBPATH':  ["env(TCLLIBPATH)",
     \                 '',
     \                 "If set, then it must contain a valid Tcl list giving directories to  search",

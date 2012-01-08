@@ -162,14 +162,17 @@ function! TagmaTips#SetupBuffer()
     setlocal ballooneval
 
     " Save these for faster lookup.
-    let b:ToolTipsRegexpBlank = g:TagmaTipsSettings[&filetype]['blank']
-    let b:ToolTipsRegexpProc = g:TagmaTipsSettings[&filetype]['proc']
+    let b:ToolTipsRegexpBlank = g:TagmaTipsSettings[&filetype]['_blank']
+    let b:ToolTipsRegexpProc = g:TagmaTipsSettings[&filetype]['_proc']
 
     " Load the file type specific settings.
-    if !has_key(g:TagmaTipsSettings[&filetype], 'loaded')
-        let g:TagmaTipsSettings[&filetype]['loaded'] = 1
-        "silent! execute 'call TagmaTips' . &filetype . '#LoadSettings()'
-        execute 'call TagmaTips' . &filetype . '#LoadSettings()'
+    if !has_key(g:TagmaTipsSettings[&filetype], '_loaded')
+        let g:TagmaTipsSettings[&filetype]['_loaded'] = 1
+        if g:TagmaTipsDebugMode
+            execute 'call TagmaTips' . &filetype . '#LoadSettings()'
+        else
+            silent! execute 'call TagmaTips' . &filetype . '#LoadSettings()'
+        endif
     endif
 
     " Autocommand to update the procedure list.
@@ -248,27 +251,27 @@ function! TagmaTips#TipsExpr()
     if has_key(l:userprocs, l:word)
         " User Procedures
         let l:tool_tip = l:userprocs[l:word]
-    elseif has_key(g:TagmaTipsSettings[l:type]['prim'], l:word)
+    elseif has_key(g:TagmaTipsSettings[l:type]['_prim'], l:word)
         " Language Primitive
-        let l:tool_tip = g:TagmaTipsSettings[l:type]['prim'][l:word]
-    elseif has_key(g:TagmaTipsSettings[l:type]['vars'], l:word)
+        let l:tool_tip = g:TagmaTipsSettings[l:type]['_prim'][l:word]
+    elseif has_key(g:TagmaTipsSettings[l:type]['_vars'], l:word)
         " Language Variable
-        let l:tool_tip = g:TagmaTipsSettings[l:type]['vars'][l:word]
-    elseif has_key(g:TagmaTipsSettings[l:type]['palias'], l:word)
+        let l:tool_tip = g:TagmaTipsSettings[l:type]['_vars'][l:word]
+    elseif has_key(g:TagmaTipsSettings[l:type]['_palias'], l:word)
         " Language Primitive Alias
-        let l:word = g:TagmaTipsSettings[l:type]['palias'][l:word]
-        if  has_key(g:TagmaTipsSettings[l:type]['prim'], l:word)
-            let l:tool_tip = g:TagmaTipsSettings[l:type]['prim'][l:word]
+        let l:word = g:TagmaTipsSettings[l:type]['_palias'][l:word]
+        if  has_key(g:TagmaTipsSettings[l:type]['_prim'], l:word)
+            let l:tool_tip = g:TagmaTipsSettings[l:type]['_prim'][l:word]
         endif
-    elseif has_key(g:TagmaTipsSettings[l:type]['valias'], l:word)
+    elseif has_key(g:TagmaTipsSettings[l:type]['_valias'], l:word)
         " Language Variables Alias
-        let l:word = g:TagmaTipsSettings[l:type]['valias'][l:word]
-        if  has_key(g:TagmaTipsSettings[l:type]['vars'], l:word)
-            let l:tool_tip = g:TagmaTipsSettings[l:type]['vars'][l:word]
+        let l:word = g:TagmaTipsSettings[l:type]['_valias'][l:word]
+        if  has_key(g:TagmaTipsSettings[l:type]['_vars'], l:word)
+            let l:tool_tip = g:TagmaTipsSettings[l:type]['_vars'][l:word]
         endif
-    elseif has_key(g:TagmaTipsSettings[l:type], 'expr')
+    elseif has_key(g:TagmaTipsSettings[l:type], '_expr')
         " Execute the file type custom lookup function.
-        execute 'let l:tool_tip = ' .g:TagmaTipsSettings[l:type]['expr']
+        execute 'let l:tool_tip = ' .g:TagmaTipsSettings[l:type]['_expr']
     endif
     
     return join(l:tool_tip, has("balloon_multiline") ? "\n" : " ")
