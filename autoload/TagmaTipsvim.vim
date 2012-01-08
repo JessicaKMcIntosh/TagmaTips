@@ -41,16 +41,12 @@ function! TagmaTipsvim#LoadSettings()
         return 0
     endif
 
-    " See if the 'eval.txt' help file is readable.
-    let l:eval_file = fnamemodify(&helpfile, ':h') . '/eval.txt'
-    if !filereadable(l:eval_file)
-        return 0
-    endif
-
     " Internal variables, builtin functions and features.
     let g:TagmaTipsSettings['vim']['ivars'] = {}
     let g:TagmaTipsSettings['vim']['builtin'] = {}
     let g:TagmaTipsSettings['vim']['feature'] = {}
+    let g:TagmaTipsSettings['vim']['option'] = {}
+    let g:TagmaTipsSettings['vim']['oalias'] = {}
 
     " Vim tool tips function.
     let g:TagmaTipsSettings['vim']['expr'] = 'TagmaTipsvim#TipsExpr()'
@@ -61,11 +57,20 @@ function! TagmaTipsvim#LoadSettings()
     endif
 
     " Load tool tip data from eval.txt.
-    call s:LoadEval(l:eval_file)
+    let l:help_file = fnamemodify(&helpfile, ':h') . '/eval.txt'
+    if filereadable(l:help_file)
+        call s:LoadEval(l:help_file)
+    endif
+
+    " Load tool tip data from options.txt.
+    let l:help_file = fnamemodify(&helpfile, ':h') . '/options.txt'
+    if filereadable(l:help_file)
+        call s:LoadOptions(l:help_file)
+    endif
 
     " Cache the data for faster load next time.
     if g:TagmaTipsEnableCache
-        call TagmaTips#CacheSave('vim', ['ivars','builtin','feature'])
+        call TagmaTips#CacheSave('vim', ['ivars','builtin','feature', 'option', 'oalias'])
     endif
 endfunction " }}}1
 
@@ -105,6 +110,17 @@ function! TagmaTipsvim#TipsExpr()
         return g:TagmaTipsSettings['vim']['feature'][v:beval_text]
     endif
 
+    " See if the cursor is over an option.
+    if l:line_start =~ '&\%([lg]:\)\?\w\+$' || l:line_start =~ 'set\s\+\w\+$'
+        if has_key(g:TagmaTipsSettings['vim']['option'], v:beval_text)
+            return g:TagmaTipsSettings['vim']['option'][v:beval_text]
+        endif
+        if has_key(g:TagmaTipsSettings['vim']['oalias'], v:beval_text)
+            return g:TagmaTipsSettings['vim']['option'][
+                        \ g:TagmaTipsSettings['vim']['oalias'][v:beval_text]]
+        endif
+    endif
+
     " Default to nothing.
     " This will cause TipsExpr() to check spelling as a last resort.
     return []
@@ -116,7 +132,7 @@ endfunction " }}}1
 "   Reads tool tip data from the 'eval.txt' help file.
 "
 " Arguments:
-"   eval_file   The full path to eval.txt.
+"   help_file   The full path to eval.txt.
 "
 " Result:
 "   None
@@ -125,14 +141,14 @@ endfunction " }}}1
 "   Sets 'ivars' to a list of internal variables from 'eval.txt'.
 "   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
 "   Sets 'feature' to a list of features from 'eval.txt'.
-function! s:LoadEval(eval_file)
+function! s:LoadEval(help_file)
     " Read the file looking for internal variable, builtin function
     " definitions and features.
     let l:section = 0           " The current section.
     let l:buried_func = 0       " Buried function definition.
     let l:name = ''             " The name of the tool tip item.
     let l:body = []             " The body of the tool tip item.
-    for l:line in readfile(a:eval_file)
+    for l:line in readfile(a:help_file)
         if l:line =~ '^Predefined Vim variables:'
             " Start of the variables.
             let l:section = 1
@@ -202,6 +218,51 @@ function! s:LoadEval(eval_file)
                 " Have a name so collect the body of a definition.
                 call add(l:body, substitute(l:line, '^\s\+', '', ''))
             endif
+        endif
+    endfor
+endfunction " }}}1
+
+" s:LoadOptions -- Load tool tip data from options.txt. {{{1
+"   Reads tool tip data from the 'options.txt' help file.
+"
+" Arguments:
+"   help_file   The full path to options.txt.
+"
+" Result:
+"   None
+"
+" Side Effects:
+"   Sets 'ivars' to a list of internal variables from 'eval.txt'.
+"   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
+"   Sets 'feature' to a list of features from 'eval.txt'.
+function! s:LoadOptions(help_file)
+    " Read the file looking for internal variable, builtin function
+    " definitions and features.
+    let l:section = 0           " The current section.
+    let l:name = ''             " The name of the tool tip item.
+    let l:body = []             " The body of the tool tip item.
+    for l:line in readfile(a:help_file)
+        if l:line =~ '^\d\+\.\s\+Options summary\s\+\*[^*]\+\*\s*$'
+            let l:section = 1
+        elseif l:section == 0
+            " Do nothing...
+        elseif l:name != '' && l:line == ''
+            call TagmaTips#StoreTip('vim', 'option', l:name, l:body)
+            let l:name = ''
+        elseif l:line =~ '^''\w\+''\%(\s\+''\w\+''\)\?\t'
+            let l:matches = matchlist(l:line, '^''\(\w\+\)''\%(\s\+''\(\w\+\)''\)\?\t')
+            if len(l:matches) != 0
+                let l:name = l:matches[1]
+                if l:matches[2] != ''
+                    let g:TagmaTipsSettings['vim']['oalias'][l:matches[2]] = l:name
+                endif
+                let l:line = substitute(l:line, '\t', '        ', 'g')
+                let l:body = [l:line]
+            endif
+        elseif l:name != '' && l:line != ''
+            " Have a name so collect the body of a definition.
+            let l:line = substitute(l:line, '\t', '        ', 'g')
+            call add(l:body, substitute(l:line, '^\(<\?\)\t\t', '', ''))
         endif
     endfor
 endfunction " }}}1
