@@ -49,11 +49,19 @@ Tcl	Locates user defined functions.
 
 Vim	Locates user defined functions.
 	Loads builtin functions, internal variables and features from the
-	eval.txt help file.
+	eval.txt help file. Loads options from the options.txt help file.
 	If enabled the data loaded from eval.txt will be cached.
 
 ==============================================================================
 SETTINGS					*TagmaTips-settings*
+
+*g:TagmaTipsDebugMode*
+	Enables debugging output. Disabled by default.
+	This is only useful if developing changes or experiencing issues.
+	Currently this only enables errors when attempting to load a file type
+	specific autoload file. This will have more uses in the future. >
+	let g:TagmaTipsDebugMode = 0
+<
 
 *g:TagmaTipsCachePath*
 	The path to save Cache files.
@@ -97,45 +105,140 @@ ADDING FILE TYPES 				*TagmaTips-adding-types*
 
 To add new file types the file "plugin/TagmaTips.vim" needs to be modified.
 The file type needs to be added to the Dictionary "g:TagmaTips#Settings. See
-the comments for details of what to add.
+the the |TagmaTips-api| section for details.
 
-Additionally for primitives and variables to be loaded properly an autoload In
-order for primitives and variables to exist for tool tips they must be defined
-in an file type specific autoload plugin. The name of the file is
-"autoload/TagmaTips#.vim" where '#' is the file type identifier, eg. "awk".
-When a file type is setup the function "LoadSettings" is called from the file
-type specific autoload file.
+In order for primitives and variables to exist for tool tips they must be
+defined in an file type specific autoload file. The name of the file is
+"autoload/TagmaTips#.vim" where "#" is the file type identifier. For example
+the Tcl specific file is "autoload/TagmaTipstcl.vim".  When a file type is
+setup the function "LoadSettings" is called from the file type specific
+autoload file. The function must include the autoload file in the name. The
+Tcl example would be "TagmaTipstcl#LoadSettings()". See |autolaod| for more
+information.
 
-File types can have a custom function to lookup tool tips. If the settings key
-"expr" exists for a file type that function is called if the tool tip can not
-be found in the normal lists. For an example see "autoload/TagmaTipsvim.vim".
+File types can have a custom function to lookup tool tips. If the setting
+"expr" exists for a file type then that function is called if the tool tip can
+not be found in the normal lists. See the |TagmaTips-api| section for details.
 
 It is suggested to copy the settings and autoload files for an exist file type
-and modify them to match your language.
+and modify them to match the new file type. For a simple example see the Tcl
+settings and file, for a complex example see the Vim settings and file..
 
 ==============================================================================
 PLUGIN API	 				*TagmaTips-api*
 
-User Procedures:
-	User procedures are searched in the current buffer using the function
-	TagmaTips#ProcScan(). This function is invoked when the buffer is
-	written vi an |autocmd|. The procedures are stored in the dictionary
-	b:TagmaToolTipsProcs.
+User Procedures ~
 
-Cache Functions (autoload/TagmaTips.vim):
-	The cache functions TagmaTips#CacheSave() and TagmaTips#CacheLoad()
-	are used to save and load cache data. Both take the file type to work
-	with. TagmaTips#CacheSave() takes a list of keys to save. The keys
-	specify entries in g:TagmaTipsSettings[&filetype] to cache. Cache data
-	is saved to the directory specified by g:TagmaTipsCachePath in a text
-	file named after the file type.
+User procedures are searched in the current buffer using the function
+TagmaTips#ProcScan(). This function is invoked when the buffer is written vi
+an |autocmd|. The procedures are stored in the dictionary
+b:TagmaToolTipsProcs.
 
-	Cache files contain two comment lines. One identifying the file type
-	and a warning not to modify the file. The third line contains the
-	plugin version. This is to prevent compatability issues should the
-	format change in the future. The fourth, and last, line contains the
-	cache data. Cache data is a dictionary containing the dictionary
-	entries to be cached converted using |string()|. This string is read
-	back using |eval()|.
+Cache Files ~
 
+Cache files are stored in the directory cache/ in the directory the plugin
+files are located. This can be changed via the |g:TagmaTipsCachePath| setting.
+If the directory does not exist an attempt is made to create it. Cache files
+are named after the file type with the extension .txt appended, eg vim.txt.
+Cache data is saved and loaded using the functions TagmaTips#CacheSave() and
+TagmaTips#CacheLoad()
+
+Cache files contain four lines. The first two are comments, the plugin version
+and the cache data. The comments identify the purpose of the file and warn
+against changing the contents. The version is saved to prevent compatability
+issues in future versions. The version is incremented when any change would
+impact existing cache files, eliminating user intervention in such cases.
+
+Functions ~
+
+TagmaTips#CacheLoad({type})			*TagmaTips#CacheLoad()*
+		Source File:	autoload/TagmaTips.vim
+	Load cache data for a file {type}. The cache data is added to the
+	g:TagmaTipsSettings dictionary for the specified file type.
+
+TagmaTips#CacheSave({type}, {keys})		*TagmaTips#CacheSave()*
+		Source File:	autoload/TagmaTips.vim
+	Saves the specified {keys} from the g:TagmaTipsSettings dictionary for
+	the specified file {type} to a cache file.
+
+						*TagmaTips#StoreTip()*
+TagmaTips#StoreTip({type}, {key}, {name}, {body})
+		Source File:	autoload/TagmaTips.vim
+	Stores a tool tip in the g:TagmaTipsSettings dictionary. The tool tip
+	is stored by {name} for the file {type} under the specific {key}. The
+	{body} should be a list and will be converted if it is not. If the
+	{body} has more than |g:TagmaTipsLineLimit| elements it is truncated
+	and "..." is used for the last item. If {name} is empty no action is
+	performed. This is intended behavior to allow calling as data is
+	parsed without adding extra checks.
+
+TagmaTips#ProcScan()				*TagmaTips#ProcScan()*
+		Source File:	autoload/TagmaTips.vim
+	This is the function that scans a file for user defined procedures. It
+	is run via an autocmd when the file is written to disk. This function
+	should not be changed as it will affect all file types. The settings
+	_blank and _proc define what is considered a user procedure and which
+	lines are included in the tool tip body.
+
+TagmaTips#SetupBuffer()				*TagmaTips#SetupBuffer()*
+		Source File:	autoload/TagmaTips.vim
+	Creates settings in the current buffer for tool tips. All settings are
+	based on the file type. An autocmd is created to scan for user
+	procedures when the buffer is written. If the file type specific
+	settings, see _loaded, have not been loaded they are loaded at this
+	point. Some settings are cached in buffer variables for cleaner code
+	and faster access.
+
+File Type Settings ~
+
+Each file type has an entry in the g:TagmaTipsSettings dictionary. The
+dictionary is keyed by file type. These settings determin how the plugin
+behaves for each file type. At a minimum the settings "_blank" and "_proc"
+must be set. All other settings are optional, with the exception of "_loaded".
+
+File type specific settings can be freely added. Settings that start with an
+underscore, "_", are reserved for internal use only.
+
+_loaded	Boolean to indicate if file type specific settings are loaded.
+	Only present when the file type settings have been loaded. To disable
+	checking for file type specific settings set this to 1. Normally this
+	should only be set internally.
+
+_blank	Regexp that matches a blank line.
+	This is used to locate the start of the description for a user
+	procedure.
+
+_proc	Regexp that matches a procedure definition.
+	Each line of the current file is checked for this regexp when the file
+	is written. Combined with the setting blank defines how the function
+	TagmaTips#ProcScan() locates user defined procedures.
+
+	The regexp must contain two groupings:
+	#1  The procedure definition for the tooltip body.
+	#2  The name of the procedure for the dictionary of user procedures.
+	    This is used as they key in the dictionary and is what would be
+	    passed from Vim to indicate the cursor is over a word.
+
+_prim	Dictionary of language primitives.
+
+_vars	Dictionary of language variables.
+
+_expr	If present this function is called if no matches are found for the
+	word under the cursor. Normally tool tips are checked for in the user
+	procedure dictionary then the settings _prim, _vars, _palias and
+	_valias.  If no entries are found the function name stored in this
+	setting is called. This function MUST return a list, even if it is
+	empty.  See the file autoload/TagmaTipsvim.vim for an example.
+
+_palias	Dictionary of primitive aliases.
+_valias	Dictionary of variable aliases.
+	The alias settings are used when a primitive or variable can have
+	several names. If an alias matches then that word is looked up in the
+	respective setting. For example the Perl documentation for the "-X"
+	operator is would have aliases keys for "-r", "-w" and so on.
+ 
+The settings "_vars", "_prim", "_palias" and "_valias" are populated from an
+autoload plugin for the file type. See autoload/TagmaTipstcl.vim for a simple
+example.
+ 
  vim:ts=8 sw=8 noexpandtab tw=78 ft=help:
