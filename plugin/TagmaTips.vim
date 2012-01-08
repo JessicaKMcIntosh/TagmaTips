@@ -21,7 +21,7 @@ let s:cpo_save = &cpo
 set cpo-=C
 
 " Only process the plugin once. {{{1
-if exists("g:loadedTagmaTips") || &cp || !has('balloon_eval')
+if exists("g:loadedTagmaTips") || &cp || !has('balloon_eval') || !has('gui_running')
     finish
 endif
 let g:loadedTagmaTips= 1
