@@ -11,7 +11,7 @@
 " Contains generic code and settings.
 
 " Plugin version.
-let g:TagmaTips#version = 20120102
+let g:TagmaTips#version = 20120107
 
 " TagmaTips#CacheLoad -- Load cache data for a file type. {{{1
 "   Loads cache data for a file type.
