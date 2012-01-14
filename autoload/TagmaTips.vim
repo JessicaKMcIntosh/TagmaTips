@@ -11,7 +11,7 @@
 " Contains generic code and settings.
 
 " Plugin version.
-let g:TagmaTips#version = 20120107
+let g:TagmaTips#version = 20120114
 
 " TagmaTips#CacheLoad -- Load cache data for a file type. {{{1
 "   Loads cache data for a file type.
@@ -65,6 +65,15 @@ endfunction " }}}1
 "   A cache file is created in the autoload directory.
 "   CAche files are named 'Cache#.txt' where '#' is the file type.
 function! TagmaTips#CacheSave(type, keys)
+    " Make sure keys is a list.
+    if type(a:keys) != type([])
+        if g:TagmaTipsDebugMode
+            echoerr 'ERROR: Invalid parameter, "keys" must be a list.'
+            echoerr 'TagmaTips#CacheSave call for file type "' . a:type . '"'
+        endif
+        return 0
+    endif
+
     " Cache file name.
     let l:cache_file = g:TagmaTipsCachePath  . a:type . '.txt'
 
@@ -126,11 +135,7 @@ function! TagmaTips#ProcScan()
             let l:proc = l:matches[2]
             let l:body = [l:matches[1], '']
             call extend(l:body, getline(l:blank + 1, l:lnum - 1))
-            if len(l:body) > g:TagmaTipsLineLimit
-                let l:body = l:body[0:g:TagmaTipsLineLimit - 1]
-                call add(l:body, '...')
-            endif
-            let b:TagmaToolTipsProcs[l:proc] = l:body
+            call TagmaTips#StoreTip('', '', l:proc, l:body)
         endif
         let l:lnum += 1
     endwhile
@@ -196,19 +201,17 @@ endfunction " }}}1
 "
 " Side Effects:
 "   The tool tip body is stored in g:TagmaTipsSettings.
+"   If type is blank the tool tip is stored in b:TagmaToolTipsProcs.
 function! TagmaTips#StoreTip(type, key, name, body)
-    " Bail if there are no settings for this file type.
-    if !has_key(g:TagmaTipsSettings, a:type)
-        return 0
-    endif
-
     " Bail if there is no name.
     if a:name == ''
         return 0
     endif
 
-    " Bail if the key does not exist.
-    if !has_key(g:TagmaTipsSettings[a:type], a:key)
+    " Bail if there are no settings for this file type or the key does not
+    " exist.
+    if a:type != '' && !has_key(g:TagmaTipsSettings, a:type) && 
+                     \ !has_key(g:TagmaTipsSettings[a:type], a:key)
         return 0
     endif
 
@@ -226,7 +229,11 @@ function! TagmaTips#StoreTip(type, key, name, body)
     endif
 
     " Save the tool tip.
-    let g:TagmaTipsSettings[a:type][a:key][a:name] = l:body
+    if a:type == ''
+        let b:TagmaToolTipsProcs[a:name] = l:body
+    else
+        let g:TagmaTipsSettings[a:type][a:key][a:name] = l:body
+    endif
 endfunction " }}}1
 
 " TagmaTips#TipsExpr -- Callback to return the tooltip text. {{{1
