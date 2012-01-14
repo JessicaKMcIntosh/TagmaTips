@@ -41,7 +41,7 @@ SUPPORTED TYPES					*TagmaTips-Types*
 AwK	Locates user defined functions.
 	Supports Awk variables and most primitives.
 
-PerlLocates user defined functions.
+Perl	Locates user defined functions.
 	Supports most Perl primitives.
 
 Tcl	Locates user defined functions.
@@ -50,7 +50,8 @@ Tcl	Locates user defined functions.
 Vim	Locates user defined functions.
 	Loads builtin functions, internal variables and features from the
 	eval.txt help file. Loads options from the options.txt help file.
-	If enabled the data loaded from eval.txt will be cached.
+	Loads AutoCmd Events from the autocmd.txt help file.
+	If enabled the data loaded from the help files is cached.
 
 ==============================================================================
 SETTINGS					*TagmaTips-settings*
@@ -66,7 +67,7 @@ SETTINGS					*TagmaTips-settings*
 *g:TagmaTipsCachePath*
 	The path to save Cache files.
 	Defaults to the directory 'cache/' where the plugin is installed.
-	IF the directory does not exist an attempt is made to create it. >
+	If the directory does not exist an attempt is made to create it. >
 		let g:TagmaTipsCachePath = '~/.vim/tips_cache/'
 <
 
@@ -80,20 +81,20 @@ SETTINGS					*TagmaTips-settings*
 *g:TagmaTipsLineLimit*
 	Limits the number of lines in the Tool Tips body.
 	If a tool tip body exceeds this number of lines it is truncated and
-	the last line is "...".
+	the last line is "...". Does not affect existinc cache files.
 	Defaults to 30 lines. >
 		let g:TagmaTipsLineLimit = 30
 <
 
 *g:TagmaTipsTypes*
-	Set the File Types that will be enabled. This must be a list.
+	Set the file types that will be enabled. This must be a list.
 	If not specified all supported file types are enabled. >
 		let g:TagmaTipsTypes = ['awk']
 <
 
 *g:TagmaTipsVimDisable*
 	Disables the extended Vim support.
-	Reading the data from the 'eval.txt' help file can take a while.
+	Reading the data from the help files can take a while.
 	This will stop the related slow-down.
 	If caching is enabled this slow-down will only be experienced once.
 	By default extended Vim support is enabled. >
@@ -122,7 +123,7 @@ not be found in the normal lists. See the |TagmaTips-api| section for details.
 
 It is suggested to copy the settings and autoload files for an exist file type
 and modify them to match the new file type. For a simple example see the Tcl
-settings and file, for a complex example see the Vim settings and file..
+settings and file, for a complex example see the Vim settings and file.
 
 ==============================================================================
 PLUGIN API	 				*TagmaTips-api*
@@ -130,7 +131,7 @@ PLUGIN API	 				*TagmaTips-api*
 User Procedures ~
 
 User procedures are searched in the current buffer using the function
-TagmaTips#ProcScan(). This function is invoked when the buffer is written vi
+TagmaTips#ProcScan(). This function is invoked when the buffer is written via
 an |autocmd|. The procedures are stored in the dictionary
 b:TagmaToolTipsProcs.
 
@@ -170,7 +171,8 @@ TagmaTips#StoreTip({type}, {key}, {name}, {body})
 	{body} has more than |g:TagmaTipsLineLimit| elements it is truncated
 	and "..." is used for the last item. If {name} is empty no action is
 	performed. This is intended behavior to allow calling as data is
-	parsed without adding extra checks.
+	parsed without adding extra checks. If {type} is empty the tool tip is
+	stored instead in b:TagmaToolTipsProcs.
 
 TagmaTips#ProcScan()				*TagmaTips#ProcScan()*
 		Source File:	autoload/TagmaTips.vim
