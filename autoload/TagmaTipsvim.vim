@@ -42,11 +42,13 @@ function! TagmaTipsvim#LoadSettings()
     endif
 
     " Internal variables, builtin functions and features.
-    let g:TagmaTipsSettings['vim']['ivars'] = {}
     let g:TagmaTipsSettings['vim']['builtin'] = {}
+    let g:TagmaTipsSettings['vim']['ealias']  = {}
+    let g:TagmaTipsSettings['vim']['event']   = {}
     let g:TagmaTipsSettings['vim']['feature'] = {}
-    let g:TagmaTipsSettings['vim']['option'] = {}
-    let g:TagmaTipsSettings['vim']['oalias'] = {}
+    let g:TagmaTipsSettings['vim']['ivars']   = {}
+    let g:TagmaTipsSettings['vim']['oalias']  = {}
+    let g:TagmaTipsSettings['vim']['option']  = {}
 
     " Vim tool tips function.
     let g:TagmaTipsSettings['vim']['_expr'] = 'TagmaTipsvim#TipsExpr()'
@@ -54,6 +56,12 @@ function! TagmaTipsvim#LoadSettings()
     " Attempt to load the tool tip data from the cache file.
     if g:TagmaTipsEnableCache && TagmaTips#CacheLoad('vim')
         return 1
+    endif
+
+    " Load tool tip data from autocmd.txt.
+    let l:help_file = fnamemodify(&helpfile, ':h') . '/autocmd.txt'
+    if filereadable(l:help_file)
+        call s:LoadAutocmd(l:help_file)
     endif
 
     " Load tool tip data from eval.txt.
@@ -70,7 +78,9 @@ function! TagmaTipsvim#LoadSettings()
 
     " Cache the data for faster load next time.
     if g:TagmaTipsEnableCache
-        call TagmaTips#CacheSave('vim', ['ivars','builtin','feature', 'option', 'oalias'])
+        call TagmaTips#CacheSave('vim',
+                    \ ["builtin", "ealias", "event", "feature",
+                    \  "ivars", "oalias", "option"])
     endif
 endfunction " }}}1
 
@@ -121,12 +131,68 @@ function! TagmaTipsvim#TipsExpr()
         endif
     endif
 
+    " See if the cursor is over an autocmd.
+    if l:line_start =~ 'au\w*\s\+\%(\w\+\s\+\)\?'
+        if has_key(g:TagmaTipsSettings['vim']['event'], v:beval_text)
+            return g:TagmaTipsSettings['vim']['event'][v:beval_text]
+        endif
+        if has_key(g:TagmaTipsSettings['vim']['ealias'], v:beval_text)
+            return g:TagmaTipsSettings['vim']['event'][
+                        \ g:TagmaTipsSettings['vim']['ealias'][v:beval_text]]
+        endif
+    endif
+
     " Default to nothing.
     " This will cause TipsExpr() to check spelling as a last resort.
     return []
 endfunction " }}}1
 
 " Utility Functions:
+
+" s:LoadAutocmd -- Load tool tip data from autocmd.txt. {{{1
+"   Reads tool tip data from the 'autocmd.txt' help file.
+"
+" Arguments:
+"   help_file   The full path to autocmd.txt.
+"
+" Result:
+"   None
+"
+" Side Effects:
+"   Sets 'event' to a list of autocmd events.
+"   Sets 'ealias' to a list of autocmd event aliases.
+function! s:LoadAutocmd(help_file)
+    " Read the file looking for autocmd events.
+    let l:section = 0           " The current section.
+    let l:name = ''             " The name of the tool tip item.
+    let l:body = []             " The body of the tool tip item.
+    for l:line in readfile(a:help_file)
+        if l:line =~ '^The alphabetical list of autocommand events:'
+            let l:section = 1
+        elseif l:section && l:line =~ '^=\+$'
+            return
+        elseif l:section == 0
+            " Do nothing...
+        elseif l:name != '' && (l:line == '' || l:line =~ '^\s\+\*')
+            call TagmaTips#StoreTip('vim', 'event', l:name, l:body)
+            let l:name = ''
+        elseif l:line =~ '^\w\+'
+            let l:matches = matchlist(l:line, '^\(\(\w\+\)\%(\s\+or\s\+\(\w\+\)\)\?\)\s\+\(.*\)$')
+            if len(l:matches) != 0
+                let l:name = l:matches[2]
+                if l:matches[3] != ''
+                    let g:TagmaTipsSettings['vim']['ealias'][l:matches[3]] = l:name
+                endif
+                let l:line = substitute(l:matches[4], '\t', '        ', 'g')
+                let l:body = [l:matches[1], '', l:line]
+            endif
+        elseif l:name != '' && l:line != '' && l:line !~ '^\s\+\*'
+            " Have a name so collect the body of a definition.
+            let l:line = substitute(l:line, '^\(<\?\)\t\+', '', '')
+            call add(l:body, substitute(l:line, '\t', '        ', 'g'))
+        endif
+    endfor
+endfunction " }}}1
 
 " s:LoadEval -- Load tool tip data from eval.txt. {{{1
 "   Reads tool tip data from the 'eval.txt' help file.
@@ -198,8 +264,7 @@ function! s:LoadEval(help_file)
             elseif l:name != '' && l:line !~ '^\s*<\s*$'
                 " Have a name so collect the body of a definition.
                 let l:line = substitute(l:line, '^\(<\?\)\t\t', '', '')
-                let l:line = substitute(l:line, '\t', '        ', 'g')
-                call add(l:body, l:line)
+                call add(l:body, substitute(l:line, '\t', '        ', 'g'))
             endif
         elseif l:section == 3
             " Process features.
@@ -232,9 +297,8 @@ endfunction " }}}1
 "   None
 "
 " Side Effects:
-"   Sets 'ivars' to a list of internal variables from 'eval.txt'.
-"   Sets 'builtin' to a list of builtin functions from 'eval.txt'.
-"   Sets 'feature' to a list of features from 'eval.txt'.
+"   Sets 'option' to a list of options variables from 'options.txt'.
+"   Sets 'oalias' to a list of option aliases.
 function! s:LoadOptions(help_file)
     " Read the file looking for internal variable, builtin function
     " definitions and features.
@@ -256,13 +320,14 @@ function! s:LoadOptions(help_file)
                 if l:matches[2] != ''
                     let g:TagmaTipsSettings['vim']['oalias'][l:matches[2]] = l:name
                 endif
+                let g:TagmaTipsSettings['vim']['oalias']['no' . l:name] = l:name
                 let l:line = substitute(l:line, '\t', '        ', 'g')
                 let l:body = [l:line]
             endif
         elseif l:name != '' && l:line != ''
             " Have a name so collect the body of a definition.
-            let l:line = substitute(l:line, '\t', '        ', 'g')
-            call add(l:body, substitute(l:line, '^\(<\?\)\t\t', '', ''))
+            let l:line = substitute(l:line, '^\(<\?\)\t\t', '', '')
+            call add(l:body, substitute(l:line, '\t', '        ', 'g'))
         endif
     endfor
 endfunction " }}}1
