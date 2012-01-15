@@ -27,46 +27,15 @@ endif
 let g:loadedTagmaTips= 1
 " }}}1
 
-" s:CheckCacheDir -- Check the cache directory. {{{1
-"   The directory is created if it does not exist.
-"
-" Arguments:
-"   None
-"
-" Result:
-"   None
-"
-" Side effect:
-"   Creates the cache directory if it does not exist.
-function! s:CheckCacheDir()
-    " Make sure the path ends in a slash.
-    if g:TagmaTipsCachePath !~ '[/\\]$'
-        let g:TagmaTipsCachePath .= '/'
-    endif
-
-    " Make sure the directory exists.
-    if !isdirectory(g:TagmaTipsCachePath)
-        if !exists("*mkdir") 
-            echoerr "Unable to create the TagmaTips cache directory '" .
-                        \ g:TagmaTipsCachePath . "'"
-            let g:TagmaTipsEnableCache = 0
-        elseif !mkdir(g:TagmaTipsCachePath)
-            echoerr "Error creating the TagmaTips cache directory '" .
-                        \ g:TagmaTipsCachePath . "'"
-            let g:TagmaTipsEnableCache = 0
-        else
-            echomsg "Created the TagmaTips cache directory '" .
-                        \ g:TagmaTipsCachePath . "'"
-        endif
-    endif
-endfunction " }}}1
-
 " Defaults {{{1
 function! s:SetDefault(option, default)
     if !exists(a:option)
         execute 'let ' . a:option . '=' . string(a:default)
     endif
 endfunction
+
+" Auto enable.
+call s:SetDefault('g:TagmaTipsAutoEnable',      1)
 
 " Enable debugging.
 call s:SetDefault('g:TagmaTipsDebugMode',       0)
@@ -82,12 +51,15 @@ call s:SetDefault('g:TagmaTipsLineLimit',       30)
 
 " The path to the cache directory.
 call s:SetDefault('g:TagmaTipsCachePath',       expand('<sfile>:p:h:h') . '/cache/')
-if g:TagmaTipsEnableCache
-    call s:CheckCacheDir()
-endif
 
 " No need for the function any longer.
 delfunction s:SetDefault
+" }}}1
+
+" User Commands {{{1
+
+" Close the Buffer Manager.
+command! -nargs=0 EnableTips        call s:EnableTagmaTips()
 " }}}1
 
 " Settings for each supported file type. {{{1
@@ -111,7 +83,38 @@ let g:TagmaTipsSettings = {
     \   },
     \ } " }}}1
 
-" s:SetupType -- Setup a tool tip type. {{{1
+" s:EnableTagmaTips -- Enable Tool Tips for the current buffer. {{{1
+"
+" Arguments:
+"   None
+"
+" Result:
+"   None
+"
+" Side effect:
+"   Prints an error if tool tips are not available for the current file type.
+"   Prints an error if tool tips are already setup for the current buffer.
+"   Tool Tips are setup for the current buffer.
+"   A message is printed that tool tips are enabled.
+function! s:EnableTagmaTips()
+    " Make sure the file type is supported.
+    if !has_key(g:TagmaTipsSettings, &filetype)
+        echoerr 'Tool Tips are not supported for the current file type.'
+        return 0
+    endif
+
+    " Make sure tool tips are not already enabled for the current buffer.
+    if exists('b:TagmaToolTipsProcs')
+        echoerr 'Tool Tips are already enabled for the current buffer.'
+        return 0
+    endif
+
+    " Enable Tool Tips.
+    call TagmaTips#SetupBuffer()
+    echomsg "Tool Tips have been enabled for the current buffer."
+endfunction " }}}1
+
+" s:SetupAutocmd -- Setup a tool tip autocmd. {{{1
 "   Configures additional settgins for the type.
 "   Creates the autocmd for the type.
 "
@@ -122,16 +125,8 @@ let g:TagmaTipsSettings = {
 "   None
 "
 " Side effect:
-"   Updates g:TagmaTipsSettings with additional settings.
 "   Create an auto command for each the file type.
-function! s:SetupType(type)
-    " Create additional settings for the file type.
-    let g:TagmaTipsSettings[a:type]['_prim'] = {}
-    let g:TagmaTipsSettings[a:type]['_vars'] = {}
-    let g:TagmaTipsSettings[a:type]['_palias'] = {}
-    let g:TagmaTipsSettings[a:type]['_valias'] = {}
-
-    " Create the autocommand for the file type.
+function! s:SetupAutocmd(type)
     execute 'autocmd FileType ' . a:type . ' call TagmaTips#SetupBuffer()'
 endfunction " }}}1
 
@@ -144,26 +139,28 @@ endfunction " }}}1
 "   None
 "
 " Side effect:
-"   Performs additional setup for each file type.
+"   Created autocommands for each enabled/supported file type.
 function! s:SetupTips()
     " Allow the user to only enable certain types.
     if exists("g:TagmaTipsTypes") && type(g:TagmaTipsTypes) == 3
         " Enable only the requested types.
         for l:type in g:TagmaTipsTypes
             if has_key(g:TagmaTipsSettings, l:type)
-                call s:SetupType(l:type)
+                call s:SetupAutocmd(l:type)
             endif
         endfor
     else
         " Enable all types.
         for l:type in keys(g:TagmaTipsSettings)
-            call s:SetupType(l:type)
+            call s:SetupAutocmd(l:type)
         endfor
     endif
 endfunction " }}}1
 
-" Setup Tagma Tool Tips.
-call s:SetupTips()
+" Setup Tagma Tool Tips if automatically enabled.
+if g:TagmaTipsAutoEnable
+    call s:SetupTips()
+endif
 
 " Restore the saved compatibility options.
 let &cpo = s:cpo_save

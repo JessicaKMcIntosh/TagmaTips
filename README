@@ -10,8 +10,9 @@ Tool Tips					*TagmaTips*
 Contents:
 	Description				|TagmaTips-description|
 	Installation				|TagmaTips-installation|
+	Supported Types				|TagmaTips-types|
+	Commands				|TagmaTips-commands|
 	Settings				|TagmaTips-settings|
-	Supported Types				|TagmaTips-Types|
 	Adding File Types			|TagmaTips-adding-types|
 	Plugin API				|TagmaTips-api|
 
@@ -28,6 +29,9 @@ functions when it is written to disk.
 
 See the GitHub URL above for more information and screenshots (in the wiki)
 
+Note: TagmaTips can consume a large quantity of memory. To limit the memory
+used either disable auto enable or limit the file types that are enabled.
+
 ==============================================================================
 INSTALLATION					*TagmaTips-installation*
 
@@ -36,7 +40,7 @@ If using a package manager like pathogen place the whole directory in the
 bundle directory.
 
 ==============================================================================
-SUPPORTED TYPES					*TagmaTips-Types*
+SUPPORTED TYPES					*TagmaTips-types*
 
 AwK	Locates user defined functions.
 	Supports Awk variables and most primitives.
@@ -54,13 +58,30 @@ Vim	Locates user defined functions.
 	If enabled the data loaded from the help files is cached.
 
 ==============================================================================
+COMMANDS					*TagmaTips-commands*
+
+:EnableTips					*EnableTips*
+	Enables tool tips for the current buffer if the file type is
+	supported. Reports an error if the file type is not supported or if
+	tool tips are already enabled for the current buffer.
+
+==============================================================================
 SETTINGS					*TagmaTips-settings*
 
+*g:TagmaTipsAutoEnable*
+	Automatically enables tool tips for supported file types.
+	If disabled tool tips must be manually enabled for each buffer using
+	the command |EnableTips|.
+	Defaults to true. Set to 0 to disable. >
+	let g:TagmaTipsAutoEnable = 1
+<
+
 *g:TagmaTipsDebugMode*
-	Enables debugging output. Disabled by default.
+	Enables debugging output.
 	This is only useful if developing changes or experiencing issues.
 	Currently this only enables errors when attempting to load a file type
-	specific autoload file. This will have more uses in the future. >
+	specific autoload file. This will have more uses in the future.
+	Disabled by default. Set to 1 to enable. >
 	let g:TagmaTipsDebugMode = 0
 <
 
@@ -74,7 +95,7 @@ SETTINGS					*TagmaTips-settings*
 *g:TagmaTipsEnableCache*
 	Enables caching of Tool Tips data if the file type supports it.
 	If disabled also disables creathing the cache path.
-	Enabled by default. >
+	Enabled by default. Set to 0 to disable. >
 	let g:TagmaTipsEnableCache = 1
 <
 
@@ -97,7 +118,7 @@ SETTINGS					*TagmaTips-settings*
 	Reading the data from the help files can take a while.
 	This will stop the related slow-down.
 	If caching is enabled this slow-down will only be experienced once.
-	By default extended Vim support is enabled. >
+	Enabled by default. Set to 0 to disable. >
 		let g:TagmaTipsVimDisable = 1
 <
 

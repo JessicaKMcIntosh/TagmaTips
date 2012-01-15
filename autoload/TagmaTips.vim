@@ -10,8 +10,15 @@
 " Autoloaded code for TagmaTips.
 " Contains generic code and settings.
 
+" Make sure the continuation lines below do not cause problems in
+" compatibility mode.
+let s:cpo_save = &cpo
+set cpo-=C
+
 " Plugin version.
 let g:TagmaTips#version = 20120114
+
+" Autoload Functions:
 
 " TagmaTips#CacheLoad -- Load cache data for a file type. {{{1
 "   Loads cache data for a file type.
@@ -71,6 +78,11 @@ function! TagmaTips#CacheSave(type, keys)
             echoerr 'ERROR: Invalid parameter, "keys" must be a list.'
             echoerr 'TagmaTips#CacheSave call for file type "' . a:type . '"'
         endif
+        return 0
+    endif
+
+    " Check the cache directory.
+    if !s:CheckCacheDir()
         return 0
     endif
 
@@ -172,6 +184,13 @@ function! TagmaTips#SetupBuffer()
 
     " Load the file type specific settings.
     if !has_key(g:TagmaTipsSettings[&filetype], '_loaded')
+        " Create base settings for the file type.
+        let g:TagmaTipsSettings[&filetype]['_prim'] = {}
+        let g:TagmaTipsSettings[&filetype]['_vars'] = {}
+        let g:TagmaTipsSettings[&filetype]['_palias'] = {}
+        let g:TagmaTipsSettings[&filetype]['_valias'] = {}
+
+        " Attempt to load additional settings.
         let g:TagmaTipsSettings[&filetype]['_loaded'] = 1
         if g:TagmaTipsDebugMode
             execute 'call TagmaTips' . &filetype . '#LoadSettings()'
@@ -283,3 +302,48 @@ function! TagmaTips#TipsExpr()
     
     return join(l:tool_tip, has("balloon_multiline") ? "\n" : " ")
 endfunction " }}}1
+
+" Utility Functions:
+
+" s:CheckCacheDir -- Check the cache directory. {{{1
+"   The directory is created if it does not exist.
+"
+" Arguments:
+"   None
+"
+" Result:
+"   None
+"
+" Side effect:
+"   Creates the cache directory if it does not exist.
+function! s:CheckCacheDir()
+    " Make sure the path ends in a slash.
+    if g:TagmaTipsCachePath !~ '[/\\]$'
+        let g:TagmaTipsCachePath .= '/'
+    endif
+
+    " Make sure the directory exists.
+    if !isdirectory(g:TagmaTipsCachePath)
+        if !exists("*mkdir") 
+            echoerr "Unable to create the TagmaTips cache directory '" .
+                        \ g:TagmaTipsCachePath . "'"
+            let g:TagmaTipsEnableCache = 0
+            return 0
+        elseif !mkdir(g:TagmaTipsCachePath)
+            echoerr "Error creating the TagmaTips cache directory '" .
+                        \ g:TagmaTipsCachePath . "'"
+            let g:TagmaTipsEnableCache = 0
+            return 0
+        else
+            echomsg "Created the TagmaTips cache directory '" .
+                        \ g:TagmaTipsCachePath . "'"
+        endif
+    endif
+
+    " The cache directory looks good.
+    return 1
+endfunction " }}}1
+
+" Restore the saved compatibility options.
+let &cpo = s:cpo_save
+unlet s:cpo_save
