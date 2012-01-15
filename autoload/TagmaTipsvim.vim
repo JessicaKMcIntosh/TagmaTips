@@ -121,7 +121,7 @@ function! TagmaTipsvim#TipsExpr()
     endif
 
     " See if the cursor is over an option.
-    if l:line_start =~ '&\%([lg]:\)\?\w\+$' || l:line_start =~ 'set\s\+\w\+$'
+    if l:line_start =~ '&\%([lg]:\)\?\w\+$' || l:line_start =~ 'set\%(l\w*\)\?\s\+\w\+$'
         if has_key(g:TagmaTipsSettings['vim']['option'], v:beval_text)
             return g:TagmaTipsSettings['vim']['option'][v:beval_text]
         endif
