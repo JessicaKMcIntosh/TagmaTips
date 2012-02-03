@@ -1,13 +1,11 @@
-*TagmaTips.txt*	For Vim version 7.x.	Last Change: Sat, Dec 31, 2011
-
-			 Plugin to display Tool Tips.
+*TagmaTips.txt*	Plugin to display Tool Tips.
+			     For Vim version 7.x.
+		  Last Changed: Fri Feb 03 12:38 PM 2012 EST
 		    https://github.com/LStinson/TagmaTips
 	     http://www.vim.org/scripts/script.php?script_id=3738
 		       By Lorance Stinson AT Gmail ...
 
-Tool Tips					*TagmaTips*
-
-Contents:
+Contents:					*TagmaTips*
 	Description				|TagmaTips-description|
 	Installation				|TagmaTips-installation|
 	Supported Types				|TagmaTips-types|
@@ -17,11 +15,11 @@ Contents:
 	Plugin API				|TagmaTips-api|
 
 
-This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
-Tips for code. Currently only Awl, Tcl and Vim are supported.
-
 ==============================================================================
 DESCRIPTION					*TagmaTips-description*
+
+This plugin uses the Tool Tip / Balloon functionality of Vim to display Tool
+Tips for code. Currently only Awl, Tcl and Vim are supported.
 
 Tool Tips are displayed for commands, variables and user defined procedures /
 functions. The current buffer is checked for user defined procedures /
