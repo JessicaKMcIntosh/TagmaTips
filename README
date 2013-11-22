@@ -1,9 +1,9 @@
 *TagmaTips.txt*	Plugin to display Tool Tips.
 			     For Vim version 7.x.
-		  Last Changed: Fri Feb 03 12:38 PM 2012 EST
-		    https://github.com/LStinson/TagmaTips
+		  Last Changed: Fri Nov 22 05:33 AM 2013 EST
+		https://github.com/JessicaKMcIntosh/TagmaTips
 	     http://www.vim.org/scripts/script.php?script_id=3738
-		       By Lorance Stinson AT Gmail ...
+		    By Jessica K McIntosh AT gmail DOT com
 
 Contents:					*TagmaTips*
 	Description				|TagmaTips-description|

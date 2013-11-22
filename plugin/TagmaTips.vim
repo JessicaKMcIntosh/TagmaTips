@@ -1,9 +1,9 @@
 " Tagma Tool Tips/Balloon Plugin
 " vim:foldmethod=marker
 " File:         plugin/TagmaTips.vim
-" Last Changed: Sun, Jan 1, 2012
-" Maintainer:   Lorance Stinson @ Gmail ...
-" Home:         https://github.com/LStinson/TagmaTips
+" Last Changed: Fri Nov 22 05:32 AM 2013 EST
+" Maintainer:   Jessica K McIntosh AT gmail DOT com
+" Home:         https://github.com/JessicaKMcIntosh/TagmaTips
 " License:      Public Domain
 "
 " Install:      Place the files in ~/.vim or ~/vimfiles
